@@ -1,13 +1,3 @@
-// LGP (Língua Gestual Portuguesa) alphabet recogniser.
-//
-// Input: 21 MediaPipe HandLandmarker keypoints (x, y, z in normalised image
-// coordinates). Output: best-matching letter + confidence (0..1).
-//
-// Approach: extract geometric features (finger extension via PIP joint angle +
-// thumb position relative to palm) then map to a letter with hand-written
-// rules. Designed for static one-handed signs only — letters that require
-// motion (J, Z) are intentionally excluded.
-
 const LM = {
   WRIST: 0,
   THUMB_CMC: 1, THUMB_MCP: 2, THUMB_IP: 3, THUMB_TIP: 4,
@@ -30,7 +20,6 @@ function angleAt(a, b, c) {
   return (Math.acos(cos) * 180) / Math.PI;
 }
 
-// Per-finger feature: PIP joint angle (≈180° = straight, ≈90° = bent).
 function fingerAngles(lm) {
   return {
     thumb: angleAt(lm[LM.THUMB_MCP], lm[LM.THUMB_IP], lm[LM.THUMB_TIP]),
@@ -52,12 +41,9 @@ function extended(angles) {
 }
 
 function palmSize(lm) {
-  // wrist → middle MCP is a stable scale reference for the hand.
   return dist(lm[LM.WRIST], lm[LM.MIDDLE_MCP]) || 1e-6;
 }
 
-// Average closure: how far fingertips are from their MCPs, normalised by palm
-// size. Used to distinguish a closed fist from a curved/cupped hand.
 function averageTipMcpRatio(lm) {
   const p = palmSize(lm);
   const tips = [
@@ -71,7 +57,6 @@ function averageTipMcpRatio(lm) {
   return s / tips.length;
 }
 
-// Score in [0..1] for how confidently a feature matches a target value.
 function near(value, target, tolerance) {
   return Math.max(0, 1 - Math.abs(value - target) / tolerance);
 }
@@ -89,70 +74,76 @@ function scoreLetter(letter, lm, ext, angles, ratio) {
   const thumbIndexD = dist(lm[LM.THUMB_TIP], lm[LM.INDEX_TIP]) / p;
   const thumbMiddleD = dist(lm[LM.THUMB_TIP], lm[LM.MIDDLE_MCP]) / p;
   const indexMiddleD = dist(lm[LM.INDEX_TIP], lm[LM.MIDDLE_TIP]) / p;
+  const thumbOutFromPalm = dist(lm[LM.THUMB_TIP], lm[LM.INDEX_MCP]) / p;
+  const thumbVec = sub(lm[LM.THUMB_TIP], lm[LM.THUMB_MCP]);
+  const indexVec = sub(lm[LM.INDEX_TIP], lm[LM.INDEX_MCP]);
+  const cosTI = dot(thumbVec, indexVec) / (len(thumbVec) * len(indexVec) + 1e-9);
+  const thumbIndexAngle = (Math.acos(Math.max(-1, Math.min(1, cosTI))) * 180) / Math.PI;
 
   switch (letter) {
-    case 'B': // 4 fingers up, thumb across palm
+    case 'B':
       return [
         ext.index && ext.middle && ext.ring && ext.pinky ? 1 : 0,
         below(angles.thumb, 150, 30),
       ];
-    case 'D': // index up, others curled
+    case 'D':
       return [
-        ext.index ? 1 : 0,
-        !ext.middle && !ext.ring && !ext.pinky ? 1 : 0,
+        ext.index && !ext.middle && !ext.ring && !ext.pinky ? 1 : 0,
+        below(thumbOutFromPalm, 0.7, 0.3),
       ];
-    case 'F': // index touches thumb (OK shape); middle/ring/pinky up
+    case 'F':
       return [
         ext.middle && ext.ring && ext.pinky ? 1 : 0,
         below(thumbIndexD, 0.35, 0.3),
       ];
-    case 'I': // pinky only
+    case 'I':
       return [
         ext.pinky ? 1 : 0,
         !ext.index && !ext.middle && !ext.ring ? 1 : 0,
       ];
-    case 'L': // thumb + index, perpendicular
+    case 'L':
       return [
-        ext.index && ext.thumb ? 1 : 0,
-        !ext.middle && !ext.ring && !ext.pinky ? 1 : 0,
+        ext.index && !ext.middle && !ext.ring && !ext.pinky ? 1 : 0,
+        above(thumbOutFromPalm, 0.75, 0.35),
+        near(thumbIndexAngle, 90, 45),
       ];
-    case 'U': // index + middle up, close together
+    case 'U':
       return [
         ext.index && ext.middle && !ext.ring && !ext.pinky ? 1 : 0,
         below(indexMiddleD, 0.4, 0.3),
       ];
-    case 'V': // index + middle up, apart
+    case 'V':
       return [
         ext.index && ext.middle && !ext.ring && !ext.pinky ? 1 : 0,
         above(indexMiddleD, 0.55, 0.3),
       ];
-    case 'W': // index + middle + ring up
+    case 'W':
       return [
         ext.index && ext.middle && ext.ring && !ext.pinky ? 1 : 0,
         1,
       ];
-    case 'Y': // thumb + pinky
+    case 'Y':
       return [
         ext.thumb && ext.pinky ? 1 : 0,
         !ext.index && !ext.middle && !ext.ring ? 1 : 0,
       ];
-    case 'O': // all fingers curled to touch thumb forming circle
+    case 'O':
       return [
         !ext.index && !ext.middle && !ext.ring && !ext.pinky ? 1 : 0,
-        near(ratio, 0.65, 0.35), // medium closure
+        near(ratio, 0.65, 0.35),
         below(thumbIndexD, 0.5, 0.3),
       ];
-    case 'C': // curved hand, palm cupped, thumb visible
+    case 'C':
       return [
         !ext.index && !ext.middle && !ext.ring && !ext.pinky ? 1 : 0,
-        above(ratio, 0.85, 0.25), // fingers curved but extended
-        above(thumbIndexD, 0.45, 0.3), // gap between thumb and index
+        above(ratio, 0.85, 0.25),
+        above(thumbIndexD, 0.45, 0.3),
       ];
-    case 'A': // closed fist, thumb on the side
+    case 'A':
       return [
         !ext.index && !ext.middle && !ext.ring && !ext.pinky ? 1 : 0,
-        below(ratio, 0.55, 0.2), // tight closure
-        above(thumbMiddleD, 0.6, 0.3), // thumb stays on the side
+        below(ratio, 0.55, 0.2),
+        above(thumbMiddleD, 0.6, 0.3),
       ];
     default:
       return [0];
@@ -174,8 +165,6 @@ export function classify(lm) {
   return { ...best, ext, ratio };
 }
 
-// Stability filter: returns a letter only if the same letter has been the
-// top guess for `holdFrames` consecutive frames with confidence ≥ minConf.
 export function createStabilityFilter({ holdFrames = 12, minConf = 0.75 } = {}) {
   let last = null;
   let count = 0;
