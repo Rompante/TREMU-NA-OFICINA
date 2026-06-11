@@ -2,7 +2,7 @@
 // are present under /public so the app can serve them locally — no third-party
 // fetches at runtime. Runs as predev/prebuild via npm scripts.
 
-import { createWriteStream, existsSync, mkdirSync, copyFileSync, readdirSync, statSync } from 'node:fs';
+import { createWriteStream, existsSync, mkdirSync, copyFileSync, readdirSync, statSync, renameSync, rmSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { pipeline } from 'node:stream/promises';
@@ -28,7 +28,16 @@ async function downloadModel() {
   if (!res.ok || !res.body) {
     throw new Error(`Falha ao descarregar o modelo (HTTP ${res.status})`);
   }
-  await pipeline(res.body, createWriteStream(MODEL_PATH));
+  // Escrever primeiro para um ficheiro temporário e só depois renomear, para
+  // que um download interrompido não deixe um .task corrompido no lugar.
+  const tmpPath = `${MODEL_PATH}.download`;
+  try {
+    await pipeline(res.body, createWriteStream(tmpPath));
+    renameSync(tmpPath, MODEL_PATH);
+  } catch (e) {
+    rmSync(tmpPath, { force: true });
+    throw e;
+  }
   console.log(`[setup] Modelo guardado em ${MODEL_PATH}`);
 }
 
