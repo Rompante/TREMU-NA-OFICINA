@@ -5,6 +5,27 @@ const WASM_DIR = '/wasm';
 
 let landmarkerPromise = null;
 
+// O runtime WASM do MediaPipe escreve logs internos na consola em formato
+// glog — ex.: "W0611 18:06:40.044000 2136208 gl_context.cc:1118] OpenGL error
+// checking is disabled". São informativos/avisos internos conhecidos (versão
+// do GL, NORM_RECT sem IMAGE_DIMENSIONS, etc.), não indicam problemas na app
+// e não há opção pública para os desligar. Filtramos APENAS linhas com este
+// prefixo exato — erros reais nunca têm este formato e continuam visíveis.
+const MEDIAPIPE_GLOG = /^[IWEF]\d{4}\s+\d{1,2}:\d{2}:\d{2}\.\d+\s+\d+\s+\S+\.cc:\d+\]/;
+let consoleFiltered = false;
+
+function filterMediapipeConsoleNoise() {
+  if (consoleFiltered) return;
+  consoleFiltered = true;
+  for (const level of ['log', 'info', 'warn', 'error']) {
+    const original = console[level].bind(console);
+    console[level] = (...args) => {
+      if (typeof args[0] === 'string' && MEDIAPIPE_GLOG.test(args[0])) return;
+      original(...args);
+    };
+  }
+}
+
 function buildOptions(delegate) {
   return {
     baseOptions: { modelAssetPath: MODEL_URL, delegate },
@@ -18,6 +39,7 @@ function buildOptions(delegate) {
 
 export function loadHandLandmarker() {
   if (landmarkerPromise) return landmarkerPromise;
+  filterMediapipeConsoleNoise();
   landmarkerPromise = (async () => {
     const vision = await FilesetResolver.forVisionTasks(WASM_DIR);
     try {
