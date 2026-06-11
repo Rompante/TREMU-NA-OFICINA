@@ -53,9 +53,25 @@ function copyWasm() {
   console.log(`[setup] WASM copiado para ${WASM_DIR}`);
 }
 
+// O vision_bundle.mjs do tasks-vision aponta para um source map com nome
+// errado (vision_bundle_mjs.js.map) que não vem no pacote, o que faz o Vite
+// avisar "Failed to load source map" a cada arranque. Criamos o ficheiro com
+// o nome esperado a partir do .map real para o aviso desaparecer. Corre em
+// cada predev, por isso sobrevive a reinstalações do node_modules.
+function fixMediapipeSourcemap() {
+  const dir = join(ROOT, 'node_modules', '@mediapipe', 'tasks-vision');
+  const realMap = join(dir, 'vision_bundle.mjs.map');
+  const expectedMap = join(dir, 'vision_bundle_mjs.js.map');
+  if (existsSync(realMap) && !existsSync(expectedMap)) {
+    copyFileSync(realMap, expectedMap);
+    console.log('[setup] Source map do tasks-vision corrigido');
+  }
+}
+
 try {
   await downloadModel();
   copyWasm();
+  fixMediapipeSourcemap();
 } catch (e) {
   console.error('[setup] Erro:', e.message);
   process.exitCode = 1;
