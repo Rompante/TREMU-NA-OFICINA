@@ -36,10 +36,23 @@ export function loadHandLandmarker() {
 
 export async function attachCamera(videoEl) {
   if (!videoEl) throw new Error('Elemento de vídeo indisponível');
-  const stream = await navigator.mediaDevices.getUserMedia({
-    video: { width: { ideal: 640 }, height: { ideal: 480 }, facingMode: 'user' },
-    audio: false,
-  });
+  // Pedimos a maior resolução razoável (HD) com a câmara frontal. O browser
+  // dá a melhor resolução suportada até a este ideal; nos telemóveis isto
+  // resulta numa imagem muito mais nítida do que os antigos 640x480.
+  const baseVideo = {
+    facingMode: 'user',
+    width: { ideal: 1280 },
+    height: { ideal: 720 },
+    frameRate: { ideal: 30 },
+  };
+  let stream;
+  try {
+    stream = await navigator.mediaDevices.getUserMedia({ video: baseVideo, audio: false });
+  } catch (e) {
+    // Se a câmara não suportar HD, recuar para constraints mínimas em vez de falhar.
+    console.warn('[handTracker] HD indisponível, a usar resolução por defeito:', e?.message || e);
+    stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' }, audio: false });
+  }
   videoEl.srcObject = stream;
   videoEl.muted = true;
   videoEl.playsInline = true;
