@@ -16,9 +16,14 @@ export default function CameraView({ target, holdFrames, onRecognition }) {
   const canvasRef = useRef(null);
   const streamRef = useRef(null);
   const rafRef = useRef(0);
-  const filterRef = useRef(createStabilityFilter({ holdFrames, minConf: 0.78 }));
+  const filterRef = useRef(null);
+  if (!filterRef.current) {
+    filterRef.current = createStabilityFilter({ holdFrames, minConf: 0.78 });
+  }
   const targetRef = useRef(target);
   const onRecognitionRef = useRef(onRecognition);
+  const lastVideoTimeRef = useRef(-1);
+  const lastSentRef = useRef(null);
   const [status, setStatus] = useState('A inicializar câmara…');
   const [error, setError] = useState(null);
 
@@ -40,35 +45,61 @@ export default function CameraView({ target, holdFrames, onRecognition }) {
         setStatus(null);
         loop();
       } catch (e) {
+        if (cancelled) return;
         console.error(e);
         setError(e?.message || 'Falha desconhecida');
       }
     })();
 
+    function emit(payload) {
+      const prev = lastSentRef.current;
+      // Evitar re-renders desnecessários: só notificar quando algo muda.
+      if (
+        prev &&
+        prev.letter === payload.letter &&
+        prev.candidate === payload.candidate &&
+        prev.committed === payload.committed &&
+        prev.progress === payload.progress
+      ) {
+        return;
+      }
+      lastSentRef.current = payload;
+      onRecognitionRef.current?.(payload);
+    }
+
     function loop() {
+      if (cancelled) return;
       const video = videoRef.current;
       const canvas = canvasRef.current;
       if (!video || !canvas || !landmarker) return;
-      if (video.readyState >= 2 && video.videoWidth) {
+
+      if (video.readyState >= 2 && video.videoWidth && video.currentTime !== lastVideoTimeRef.current) {
+        lastVideoTimeRef.current = video.currentTime;
         canvas.width = video.videoWidth;
         canvas.height = video.videoHeight;
-        const result = landmarker.detectForVideo(video, performance.now());
+        let result;
+        try {
+          result = landmarker.detectForVideo(video, performance.now());
+        } catch (e) {
+          console.error('[CameraView] detectForVideo falhou:', e?.message || e);
+          result = null;
+        }
         const ctx = canvas.getContext('2d');
         ctx.save();
         ctx.clearRect(0, 0, canvas.width, canvas.height);
-        // Mirror horizontally — selfie view feels natural for users.
+        // Espelhar horizontalmente — a vista "selfie" é mais natural.
         ctx.translate(canvas.width, 0);
         ctx.scale(-1, 1);
         ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
         let recognised = { letter: null, confidence: 0 };
-        if (result.landmarks && result.landmarks.length) {
+        if (result && result.landmarks && result.landmarks.length) {
           const lm = result.landmarks[0];
           drawHand(ctx, lm, canvas.width, canvas.height);
           recognised = classify(lm);
         }
         ctx.restore();
         const filt = filterRef.current.push(recognised);
-        onRecognitionRef.current?.({
+        emit({
           letter: recognised.letter,
           confidence: recognised.confidence,
           candidate: filt.candidate,
@@ -85,13 +116,14 @@ export default function CameraView({ target, holdFrames, onRecognition }) {
       cancelAnimationFrame(rafRef.current);
       stopCamera(streamRef.current);
       streamRef.current = null;
+      lastVideoTimeRef.current = -1;
     };
   }, []);
 
   return (
     <section className="camera">
       <div className="camera-frame">
-        <video ref={videoRef} playsInline muted style={{ display: 'none' }} />
+        <video ref={videoRef} playsInline muted className="camera-video" />
         <canvas ref={canvasRef} className="camera-canvas" />
         {(status || error) && (
           <div className={`camera-overlay ${error ? 'error' : ''}`}>

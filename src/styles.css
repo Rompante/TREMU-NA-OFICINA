@@ -100,12 +100,23 @@ button:active { transform: translateY(1px); }
 .camera-frame {
   position: relative;
   width: 100%;
-  aspect-ratio: 4 / 3;
+  min-height: 240px;
   background: #000;
   border-radius: 10px;
   overflow: hidden;
 }
-.camera-canvas { width: 100%; height: 100%; display: block; }
+/* O canvas tem dimensões intrínsecas (videoWidth x videoHeight), por isso com
+   height:auto mantém as proporções reais da câmara — sem esticar no telemóvel. */
+.camera-canvas { width: 100%; height: auto; display: block; }
+/* O vídeo alimenta o canvas; mantém-se no DOM (alguns browsers não
+   descodificam frames com display:none) mas fora da vista. */
+.camera-video {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
 .camera-overlay {
   position: absolute; inset: 0;
   display: flex; flex-direction: column;
