@@ -189,4 +189,4 @@ export function createStabilityFilter({ holdFrames = 12, minConf = 0.75 } = {}) 
     reset() { last = null; count = 0; locked = null; },
     clearLock() { locked = null; },
   };
-}542 6556
+}
