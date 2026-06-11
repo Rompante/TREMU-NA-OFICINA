@@ -36,13 +36,16 @@ export function loadHandLandmarker() {
 
 export async function attachCamera(videoEl) {
   if (!videoEl) throw new Error('Elemento de vídeo indisponível');
-  // Pedimos a maior resolução razoável (HD) com a câmara frontal. O browser
-  // dá a melhor resolução suportada até a este ideal; nos telemóveis isto
-  // resulta numa imagem muito mais nítida do que os antigos 640x480.
+  // Pedimos resolução HD com a câmara frontal mas mantemos a proporção 4:3.
+  // IMPORTANTE: o classificador geométrico usa landmarks normalizados (0-1),
+  // que dependem da proporção da imagem. Foi afinado para 4:3 (como os antigos
+  // 640x480), por isso mantemos 4:3 — só aumentamos a resolução. Mudar para
+  // 16:9 distorceria a geometria e os gestos passariam a ser lidos errado.
   const baseVideo = {
     facingMode: 'user',
     width: { ideal: 1280 },
-    height: { ideal: 720 },
+    height: { ideal: 960 },
+    aspectRatio: { ideal: 4 / 3 },
     frameRate: { ideal: 30 },
   };
   let stream;
