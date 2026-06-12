@@ -5,6 +5,7 @@ import AlphabetGuide from './components/AlphabetGuide.jsx';
 import { pickRandomWord } from './lib/words.js';
 
 const HOLD_FRAMES = 14;
+const APP_VERSION = '0.2';
 
 export default function App() {
   const [started, setStarted] = useState(false);
@@ -89,7 +90,7 @@ export default function App() {
       {showGuide && <AlphabetGuide onClose={() => setShowGuide(false)} />}
 
       <footer className="footer">
-        <span>Stand-alone · corre 100 % no navegador · sem serviços externos</span>
+        <span>v{APP_VERSION} · Stand-alone · corre 100 % no navegador · sem serviços externos</span>
       </footer>
     </div>
   );
