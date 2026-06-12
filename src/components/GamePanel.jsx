@@ -1,4 +1,5 @@
 import React from 'react';
+import SignVisual from './SignVisual.jsx';
 
 export default function GamePanel({
   word, hint, letterIndex, score, solved, recognised, onSkip, onGuide,
@@ -35,12 +36,17 @@ export default function GamePanel({
       <p className="hint-text">Dica: <em>{hint}</em></p>
 
       <div className="recognised">
-        <span className="label">A letra atual</span>
-        <span className="big-letter">{target}</span>
-        <span className="label">Estás a fazer</span>
-        <span className={`big-letter detected${matches ? ' ok' : ''}`}>
-          {candidate || '—'}
-        </span>
+        <div className="rec-block">
+          <span className="label">Faz este sinal</span>
+          <SignVisual key={target} letter={target} variant="target" />
+          <span className="big-letter">{target}</span>
+        </div>
+        <div className="rec-block">
+          <span className="label">Estás a fazer</span>
+          <span className={`big-letter detected${matches ? ' ok' : ''}`}>
+            {candidate || '—'}
+          </span>
+        </div>
       </div>
 
       <div className="actions">

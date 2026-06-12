@@ -173,11 +173,16 @@ button:active { transform: translateY(1px); }
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 8px 12px;
-  align-items: center;
+  align-items: start;
   background: var(--bg-elev);
   border: 1px solid var(--border);
   border-radius: 12px;
   padding: 12px;
+}
+.rec-block {
+  display: flex; flex-direction: column;
+  align-items: center; gap: 8px;
+  text-align: center;
 }
 .recognised .label { color: var(--fg-dim); font-size: 12px; text-transform: uppercase; letter-spacing: 1px; }
 .big-letter {
@@ -285,21 +290,21 @@ button:active { transform: translateY(1px); }
   border-radius: 10px;
   padding: 10px 12px;
 }
-.alpha-img,
-.alpha-illus {
-  width: 64px; height: 64px;
+/* Visual de um sinal (foto oficial ou esquema desenhado) — partilhado entre
+   o guia do alfabeto e o painel de jogo. */
+.sign-visual {
+  display: flex; align-items: center; justify-content: center;
   flex-shrink: 0;
   border-radius: 8px;
   background: #0b1220;
   border: 1px solid var(--border);
-}
-.alpha-img { object-fit: contain; }
-.alpha-illus {
-  display: flex; align-items: center; justify-content: center;
-  padding: 6px;
   color: var(--accent);
+  overflow: hidden;
 }
-.sign-svg { width: 100%; height: 100%; display: block; }
+.sign-visual img { width: 100%; height: 100%; object-fit: contain; display: block; }
+.sign-svg { width: 100%; height: 100%; display: block; padding: 6px; }
+.sign-visual.guide { width: 64px; height: 64px; }
+.sign-visual.target { width: 92px; height: 92px; }
 .alpha-info { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
 .alpha-letter {
   font-weight: 800; font-size: 22px;
