@@ -56,7 +56,7 @@ function Thumb({ variant }) {
 const SIGNS = {
   A: { ext: [], thumb: 'front' },
   B: { ext: [], thumb: 'up' },
-  D: { ext: ['index'], thumb: 'side' },
+  D: { ext: ['index', 'middle', 'ring', 'pinky'], thumb: 'tuck' },
   I: { ext: ['pinky'], thumb: 'tuck' },
   L: { ext: ['index'], thumb: 'out' },
   U: { ext: ['index', 'middle'], thumb: 'tuck', x: { index: 46, middle: 58 } },

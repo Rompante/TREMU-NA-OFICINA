@@ -88,9 +88,11 @@ function scoreLetter(letter, lm, ext, angles, ratio) {
         ext.thumb && !ext.index && !ext.middle && !ext.ring && !ext.pinky ? 1 : 0,
       ];
     case 'D':
+      // LGP: mão espalmada — os quatro dedos esticados e juntos (na foto
+      // oficial aparece deitada/na horizontal). NÃO é o indicador sozinho.
       return [
-        ext.index && !ext.middle && !ext.ring && !ext.pinky ? 1 : 0,
-        below(thumbOutFromPalm, 0.7, 0.3),
+        ext.index && ext.middle && ext.ring && ext.pinky ? 1 : 0,
+        below(indexMiddleD, 0.5, 0.3),
       ];
     case 'F':
       return [
