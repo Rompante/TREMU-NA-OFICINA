@@ -187,9 +187,59 @@ button:active { transform: translateY(1px); }
   text-align: center;
 }
 .big-letter.detected { color: var(--fg-dim); }
-.big-letter.detected.ok { color: var(--ok); }
+.big-letter.detected.ok { color: var(--ok); animation: detectPulse .5s ease; }
 
 .actions { display: flex; gap: 10px; flex-wrap: wrap; }
+
+/* ---- Feedback ao acertar (animações puras em CSS) ---- */
+
+/* A letra "salta" e brilha a verde quando fica concluída. */
+.letter-tile.done {
+  animation: tilePop .42s cubic-bezier(.22, 1.2, .4, 1);
+}
+@keyframes tilePop {
+  0%   { transform: scale(.6); }
+  45%  { transform: scale(1.18); box-shadow: 0 0 0 6px rgba(74, 222, 128, .35); }
+  100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(74, 222, 128, 0); }
+}
+
+/* Pequeno "pulsar" da letra detetada quando coincide com o alvo. */
+@keyframes detectPulse {
+  0%   { transform: scale(1); }
+  40%  { transform: scale(1.25); }
+  100% { transform: scale(1); }
+}
+
+/* Toast de vitória ao completar a palavra. */
+.celebrate {
+  position: fixed; inset: 0;
+  display: flex; align-items: center; justify-content: center;
+  pointer-events: none;
+  z-index: 60;
+}
+.celebrate-text {
+  font-size: clamp(32px, 7vw, 64px);
+  font-weight: 800;
+  color: var(--ok);
+  text-shadow: 0 6px 30px rgba(74, 222, 128, .45);
+  animation: celebratePop 1.2s ease forwards;
+}
+.celebrate-text strong { color: var(--accent-2); }
+@keyframes celebratePop {
+  0%   { transform: scale(.4) translateY(20px); opacity: 0; }
+  20%  { transform: scale(1.1) translateY(0); opacity: 1; }
+  70%  { transform: scale(1) translateY(0); opacity: 1; }
+  100% { transform: scale(1) translateY(-30px); opacity: 0; }
+}
+
+/* Acessibilidade: respeita quem prefere menos movimento. */
+@media (prefers-reduced-motion: reduce) {
+  .letter-tile.done,
+  .big-letter.detected.ok,
+  .celebrate-text {
+    animation-duration: .01ms;
+  }
+}
 
 .footer {
   margin-top: auto;
