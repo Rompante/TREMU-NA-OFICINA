@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import SignIllustration from './SignIllustration.jsx';
 
 const ENTRIES = [
   { letter: 'A', desc: 'Mão fechada em punho, polegar apoiado ao lado dos dedos.' },
@@ -20,7 +21,12 @@ const ENTRIES = [
 function SignImage({ letter }) {
   const [failed, setFailed] = useState(false);
   if (failed) {
-    return <span className="alpha-fallback" aria-hidden="true">{letter}</span>;
+    // Sem foto oficial: mostra o esquema desenhado (ponte) em vez de ficar vazio.
+    return (
+      <span className="alpha-illus">
+        <SignIllustration letter={letter} />
+      </span>
+    );
   }
   return (
     <img
