@@ -42,6 +42,8 @@ function Thumb({ variant }) {
       return <rect x="5" y="82" width="32" height="13" rx="6.5" />;
     case 'up': // esticado para cima ao lado do punho (B)
       return <rect x="26" y="22" width="12" height="38" rx="6" />;
+    case 'front': // atravessado à frente dos dedos dobrados (A)
+      return <rect x="33" y="62" width="32" height="11" rx="5.5" transform="rotate(-6 49 67)" />;
     case 'side': // ligeiramente aberto ao lado (D)
       return <rect x="20" y="64" width="13" height="30" rx="6.5" transform="rotate(26 26 79)" />;
     case 'tuck': // encostado aos dedos (punho: A, I, U, V)
@@ -52,7 +54,7 @@ function Thumb({ variant }) {
 
 // Configuração por letra. `ext`: dedos esticados. `x`/`rot`: ajustes finos.
 const SIGNS = {
-  A: { ext: [], thumb: 'tuck' },
+  A: { ext: [], thumb: 'front' },
   B: { ext: [], thumb: 'up' },
   D: { ext: ['index'], thumb: 'side' },
   I: { ext: ['pinky'], thumb: 'tuck' },

@@ -141,12 +141,12 @@ function scoreLetter(letter, lm, ext, angles, ratio) {
         above(thumbIndexD, 0.45, 0.3),
       ];
     case 'A':
-      // LGP: punho fechado, polegar à frente/ao lado dos dedos — NÃO para
-      // cima (isso é o B). O `!ext.thumb` separa o A do B.
+      // LGP: punho fechado com o polegar à FRENTE dos dedos (atravessado),
+      // não esticado para cima (isso é o B) nem afastado para o lado (estilo
+      // internacional). Por isso não exigimos o polegar longe da palma.
       return [
         !ext.thumb && !ext.index && !ext.middle && !ext.ring && !ext.pinky ? 1 : 0,
         below(ratio, 0.55, 0.2),
-        above(thumbMiddleD, 0.6, 0.3),
       ];
     default:
       return [0];
