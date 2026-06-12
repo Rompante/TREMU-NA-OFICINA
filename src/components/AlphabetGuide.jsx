@@ -3,7 +3,7 @@ import SignVisual from './SignVisual.jsx';
 
 const ENTRIES = [
   { letter: 'A', desc: 'Mão fechada em punho, polegar apoiado ao lado dos dedos.' },
-  { letter: 'B', desc: 'Quatro dedos esticados juntos para cima, polegar dobrado contra a palma.' },
+  { letter: 'B', desc: 'Mão fechada em punho, com o polegar esticado para cima.' },
   { letter: 'C', desc: 'Mão curvada formando a forma da letra C, polegar e dedos arqueados.' },
   { letter: 'D', desc: 'Indicador esticado para cima, polegar toca nos outros dedos dobrados.' },
   { letter: 'F', desc: 'Polegar e indicador formam um círculo (OK); médio, anelar e mindinho esticados.' },
