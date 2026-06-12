@@ -14,6 +14,7 @@ export default function App() {
   const [solved, setSolved] = useState(0);
   const [recognised, setRecognised] = useState({ letter: null, confidence: 0, progress: 0 });
   const [showGuide, setShowGuide] = useState(false);
+  const [celebrate, setCelebrate] = useState(0);
   const historyRef = useRef([]);
 
   function newRound(history) {
@@ -28,6 +29,7 @@ export default function App() {
     } else {
       setScore((s) => s + 25);
       setSolved((s) => s + 1);
+      setCelebrate((c) => c + 1);
       historyRef.current = [...historyRef.current, round.word].slice(-20);
       setRound(newRound(historyRef.current));
       setLetterIndex(0);
@@ -76,6 +78,12 @@ export default function App() {
             onGuide={() => setShowGuide(true)}
           />
         </main>
+      )}
+
+      {celebrate > 0 && (
+        <div key={celebrate} className="celebrate" aria-hidden="true">
+          <span className="celebrate-text">Boa! <strong>+25</strong> 🎉</span>
+        </div>
       )}
 
       {showGuide && <AlphabetGuide onClose={() => setShowGuide(false)} />}
