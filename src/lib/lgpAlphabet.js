@@ -82,9 +82,10 @@ function scoreLetter(letter, lm, ext, angles, ratio) {
 
   switch (letter) {
     case 'B':
+      // LGP: mão fechada (punho) com o polegar esticado para cima — tipo 👍.
+      // (O alfabeto internacional usa a mão espalmada; aqui seguimos a LGP.)
       return [
-        ext.index && ext.middle && ext.ring && ext.pinky ? 1 : 0,
-        below(angles.thumb, 150, 30),
+        ext.thumb && !ext.index && !ext.middle && !ext.ring && !ext.pinky ? 1 : 0,
       ];
     case 'D':
       return [
@@ -140,8 +141,10 @@ function scoreLetter(letter, lm, ext, angles, ratio) {
         above(thumbIndexD, 0.45, 0.3),
       ];
     case 'A':
+      // LGP: punho fechado, polegar à frente/ao lado dos dedos — NÃO para
+      // cima (isso é o B). O `!ext.thumb` separa o A do B.
       return [
-        !ext.index && !ext.middle && !ext.ring && !ext.pinky ? 1 : 0,
+        !ext.thumb && !ext.index && !ext.middle && !ext.ring && !ext.pinky ? 1 : 0,
         below(ratio, 0.55, 0.2),
         above(thumbMiddleD, 0.6, 0.3),
       ];
