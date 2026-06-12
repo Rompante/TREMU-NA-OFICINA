@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 
 const ENTRIES = [
   { letter: 'A', desc: 'Mão fechada em punho, polegar apoiado ao lado dos dedos.' },
@@ -15,6 +15,24 @@ const ENTRIES = [
   { letter: 'Y', desc: 'Polegar e mindinho esticados, os outros dedos dobrados.' },
 ];
 
+// Mostra a imagem real do sinal (public/signs/<LETRA>.png) quando existe;
+// caso contrário recua para um marcador com a letra, sem nunca ficar partido.
+function SignImage({ letter }) {
+  const [failed, setFailed] = useState(false);
+  if (failed) {
+    return <span className="alpha-fallback" aria-hidden="true">{letter}</span>;
+  }
+  return (
+    <img
+      className="alpha-img"
+      src={`/signs/${letter}.png`}
+      alt={`Sinal da letra ${letter} em Língua Gestual Portuguesa`}
+      loading="lazy"
+      onError={() => setFailed(true)}
+    />
+  );
+}
+
 export default function AlphabetGuide({ onClose }) {
   return (
     <div className="modal" role="dialog" aria-modal="true" onClick={onClose}>
@@ -30,8 +48,11 @@ export default function AlphabetGuide({ onClose }) {
         <ul className="alphabet-grid">
           {ENTRIES.map(({ letter, desc }) => (
             <li key={letter}>
-              <span className="alpha-letter">{letter}</span>
-              <span className="alpha-desc">{desc}</span>
+              <SignImage letter={letter} />
+              <div className="alpha-info">
+                <span className="alpha-letter">{letter}</span>
+                <span className="alpha-desc">{desc}</span>
+              </div>
             </li>
           ))}
         </ul>
