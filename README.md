@@ -20,6 +20,14 @@ APIs externas a serem chamadas durante o jogo.
 Apenas sinais **estáticos** a uma mão: `A B C D F I L O U V W Y`.
 Letras com movimento (J, Z) ficam fora desta versão.
 
+As formas de cada sinal seguem o **alfabeto manual oficial da Língua Gestual
+Portuguesa**, conforme o cartaz da **Associação Portuguesa de Surdos (APS)** —
+e não o alfabeto internacional. Por exemplo, em LGP o **A** é o punho com o
+polegar à frente dos dedos, o **B** é o punho com o polegar para cima, e o
+**D** é a mão espalmada. O guia "Ver alfabeto" mostra cada sinal; podem
+colocar-se fotografias reais em [`public/signs/`](public/signs/) (uma por
+letra, ex.: `A.png`), que substituem automaticamente as ilustrações.
+
 ## Banco de palavras
 
 Está em [`src/lib/words.js`](src/lib/words.js). São ~25 palavras pt-PT de
@@ -61,12 +69,16 @@ src/
   styles.css              tema escuro acessível
   components/
     CameraView.jsx        câmara + canvas + loop de inferência
-    GamePanel.jsx         palavra-alvo, pontuação, progresso
-    AlphabetGuide.jsx     modal com descrição das letras
+    GamePanel.jsx         palavra-alvo, pontuação, progresso, sinal-alvo
+    AlphabetGuide.jsx     modal com o alfabeto (imagem + descrição)
+    SignVisual.jsx        foto do sinal (public/signs) com recuo p/ ilustração
+    SignIllustration.jsx  esquema SVG da mão por letra (gerado no código)
   lib/
     handTracker.js        carrega o HandLandmarker e gere a câmara
     lgpAlphabet.js        classificador geométrico + filtro de estabilidade
     words.js              banco de palavras + amostragem
+public/
+  signs/                  fotos reais dos sinais (opcional: A.png, B.png, …)
 scripts/
   download-model.js       descarrega modelo + copia WASM para /public
 ```
