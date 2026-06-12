@@ -5,7 +5,7 @@ const ENTRIES = [
   { letter: 'A', desc: 'Mão fechada em punho, com o polegar atravessado à frente dos dedos.' },
   { letter: 'B', desc: 'Mão fechada em punho, com o polegar esticado para cima.' },
   { letter: 'C', desc: 'Mão curvada formando a forma da letra C, polegar e dedos arqueados.' },
-  { letter: 'D', desc: 'Indicador esticado para cima, polegar toca nos outros dedos dobrados.' },
+  { letter: 'D', desc: 'Mão espalmada, com os quatro dedos esticados e juntos (na foto, na horizontal).' },
   { letter: 'F', desc: 'Polegar e indicador formam um círculo (OK); médio, anelar e mindinho esticados.' },
   { letter: 'I', desc: 'Punho fechado com o mindinho esticado para cima.' },
   { letter: 'L', desc: 'Polegar e indicador formam um L; os outros dedos dobrados.' },
