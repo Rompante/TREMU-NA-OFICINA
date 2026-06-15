@@ -54,7 +54,7 @@ function Thumb({ variant }) {
 
 // Configuração por letra. `ext`: dedos esticados. `x`/`rot`: ajustes finos.
 const SIGNS = {
-  A: { ext: [], thumb: 'front' },
+  A: { ext: [], thumb: 'out' },
   B: { ext: [], thumb: 'up' },
   D: { ext: ['index', 'middle', 'ring', 'pinky'], thumb: 'tuck' },
   I: { ext: ['pinky'], thumb: 'tuck' },

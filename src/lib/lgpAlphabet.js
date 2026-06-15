@@ -79,13 +79,20 @@ function scoreLetter(letter, lm, ext, angles, ratio) {
   const indexVec = sub(lm[LM.INDEX_TIP], lm[LM.INDEX_MCP]);
   const cosTI = dot(thumbVec, indexVec) / (len(thumbVec) * len(indexVec) + 1e-9);
   const thumbIndexAngle = (Math.acos(Math.max(-1, Math.min(1, cosTI))) * 180) / Math.PI;
+  // Direção do polegar em relação ao eixo da mão (pulso -> base do médio):
+  // ~0° = polegar alinhado com a mão (para cima, B); ~90° = polegar para o
+  // lado (na horizontal, A).
+  const handUp = sub(lm[LM.MIDDLE_MCP], lm[LM.WRIST]);
+  const cosTH = dot(handUp, thumbVec) / (len(handUp) * len(thumbVec) + 1e-9);
+  const thumbHandAngle = (Math.acos(Math.max(-1, Math.min(1, cosTH))) * 180) / Math.PI;
 
   switch (letter) {
     case 'B':
-      // LGP: mão fechada (punho) com o polegar esticado para cima — tipo 👍.
+      // LGP: mão fechada (punho) com o polegar esticado PARA CIMA — tipo 👍.
       // (O alfabeto internacional usa a mão espalmada; aqui seguimos a LGP.)
       return [
         ext.thumb && !ext.index && !ext.middle && !ext.ring && !ext.pinky ? 1 : 0,
+        below(thumbHandAngle, 45, 35),
       ];
     case 'D':
       // LGP: mão espalmada — os quatro dedos esticados e juntos (na foto
@@ -150,13 +157,12 @@ function scoreLetter(letter, lm, ext, angles, ratio) {
         above(thumbIndexD, 0.35, 0.35),
       ];
     case 'A':
-      // LGP: punho fechado com o polegar à FRENTE dos dedos (atravessado),
-      // não esticado para cima (isso é o B). Aceita um punho NORMAL — não é
-      // preciso apertar como um murro. O ratio (não muito alto) distingue-o
-      // do C (mão curvada e mais aberta).
+      // LGP: mão fechada (punho) com o polegar ESTICADO PARA O LADO (na
+      // horizontal). NÃO é um murro (polegar dobrado) nem o B (polegar para
+      // cima) — distingue-se pela direção do polegar (perpendicular à mão).
       return [
-        !ext.thumb && !ext.index && !ext.middle && !ext.ring && !ext.pinky ? 1 : 0,
-        below(ratio, 0.62, 0.3),
+        ext.thumb && !ext.index && !ext.middle && !ext.ring && !ext.pinky ? 1 : 0,
+        above(thumbHandAngle, 55, 35),
       ];
     default:
       return [0];
