@@ -194,6 +194,9 @@ export function createStabilityFilter({ holdFrames = 12, minConf = 0.75 } = {}) 
       if (!letter || confidence < minConf) {
         last = null;
         count = 0;
+        // Ao baixar a mão (ou perder confiança) liberta o "lock", para se
+        // poder registar a mesma letra novamente a seguir (ex.: escrever "OO").
+        locked = null;
         return { committed: null, candidate: letter, progress: 0 };
       }
       if (letter === last) count++;

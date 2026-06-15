@@ -1,10 +1,11 @@
 # TREMU NA OFICINA
 
-Jogo de inclusão social em **React + JavaScript** que ensina e treina o
-alfabeto manual da **Língua Gestual Portuguesa (LGP)**. O utilizador vê uma
-palavra de quatro letras e tem de a soletrar com a mão à frente da câmara.
-O reconhecimento corre **inteiramente no navegador** — não há servidores nem
-APIs externas a serem chamadas durante o jogo.
+Aplicação de inclusão social em **React + JavaScript**: um **tradutor** do
+alfabeto manual da **Língua Gestual Portuguesa (LGP)**. O utilizador faz um
+sinal à frente da câmara e a app **reconhece e diz que letra é** — segurando o
+sinal um instante, a letra junta-se às anteriores para formar palavras (com
+apagar, espaço e limpar). O reconhecimento corre **inteiramente no navegador**
+— não há servidores nem APIs externas a serem chamadas durante o uso.
 
 ## Como funciona
 
@@ -12,8 +13,9 @@ APIs externas a serem chamadas durante o jogo.
    no browser e devolve 21 pontos de referência da mão por *frame*.
 2. Um classificador geométrico próprio (`src/lib/lgpAlphabet.js`) avalia
    ângulos das articulações e distâncias relativas para identificar a letra.
-3. A letra fica "presa" quando se mantém o gesto durante ~14 *frames* — só
-   aí avança no jogo, para evitar falsos positivos.
+3. A letra fica "registada" quando se mantém o gesto durante ~14 *frames* — só
+   aí é escrita, para evitar falsos positivos. Baixando a mão liberta-se o
+   bloqueio, para se poder escrever a mesma letra outra vez (ex.: "OO").
 
 ## Letras suportadas
 

@@ -11,7 +11,7 @@ const HAND_CONNECTIONS = [
   [0,17],
 ];
 
-export default function CameraView({ target, holdFrames, onRecognition }) {
+export default function CameraView({ holdFrames, onRecognition }) {
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
   const streamRef = useRef(null);
@@ -20,14 +20,12 @@ export default function CameraView({ target, holdFrames, onRecognition }) {
   if (!filterRef.current) {
     filterRef.current = createStabilityFilter({ holdFrames, minConf: 0.78 });
   }
-  const targetRef = useRef(target);
   const onRecognitionRef = useRef(onRecognition);
   const lastVideoTimeRef = useRef(-1);
   const lastSentRef = useRef(null);
   const [status, setStatus] = useState('A inicializar câmara…');
   const [error, setError] = useState(null);
 
-  useEffect(() => { targetRef.current = target; filterRef.current.clearLock(); }, [target]);
   useEffect(() => { onRecognitionRef.current = onRecognition; }, [onRecognition]);
 
   useEffect(() => {
@@ -105,7 +103,6 @@ export default function CameraView({ target, holdFrames, onRecognition }) {
           candidate: filt.candidate,
           committed: filt.committed,
           progress: filt.progress,
-          target: targetRef.current,
         });
       }
       rafRef.current = requestAnimationFrame(loop);

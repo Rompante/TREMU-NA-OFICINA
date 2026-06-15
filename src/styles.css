@@ -196,6 +196,47 @@ button:active { transform: translateY(1px); }
 
 .actions { display: flex; gap: 10px; flex-wrap: wrap; }
 
+/* ---- Painel do tradutor ---- */
+.detect {
+  background: var(--bg-elev);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 16px;
+  display: flex; flex-direction: column; gap: 10px; align-items: center;
+  text-align: center;
+}
+.detect .label,
+.output .label {
+  color: var(--fg-dim); font-size: 12px;
+  text-transform: uppercase; letter-spacing: 1px;
+}
+.detect-main { display: flex; align-items: center; justify-content: center; gap: 16px; min-height: 96px; }
+.detect-empty { color: var(--fg-dim); font-size: 14px; max-width: 160px; }
+.detect-main .big-letter { font-size: 72px; }
+.detect-bar {
+  width: 100%; height: 8px;
+  background: var(--bg-card); border-radius: 999px; overflow: hidden;
+}
+.detect-fill { height: 100%; width: 0; background: var(--accent); transition: width .08s linear; }
+.detect-hint { color: var(--fg-dim); font-size: 13px; min-height: 18px; }
+
+.output {
+  background: var(--bg-elev);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 14px 16px;
+  display: flex; flex-direction: column; gap: 8px;
+}
+.output-text {
+  font-size: 32px; font-weight: 800; letter-spacing: 4px;
+  min-height: 44px; word-break: break-all;
+  display: flex; align-items: center;
+}
+.output-placeholder { color: var(--fg-dim); letter-spacing: 0; font-weight: 400; font-size: 16px; }
+.cursor { color: var(--accent); font-weight: 400; animation: blink 1s steps(1) infinite; }
+@keyframes blink { 50% { opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .cursor { animation: none; } }
+
 /* ---- Feedback ao acertar (animações puras em CSS) ---- */
 
 /* A letra "salta" e brilha a verde quando fica concluída. */
