@@ -5,7 +5,7 @@ import AlphabetGuide from './components/AlphabetGuide.jsx';
 import { pickRandomWord } from './lib/words.js';
 
 const HOLD_FRAMES = 14;
-const APP_VERSION = '0.6';
+const APP_VERSION = '0.7';
 
 export default function App() {
   const [started, setStarted] = useState(false);

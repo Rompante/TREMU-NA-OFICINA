@@ -1,7 +1,12 @@
 # Imagens dos sinais (LGP)
 
-Coloca aqui uma imagem por letra do alfabeto manual da Língua Gestual
-Portuguesa. O guia ("Ver alfabeto") mostra-as automaticamente.
+Esta pasta já contém as **12 imagens oficiais** do alfabeto manual da Língua
+Gestual Portuguesa, recortadas do cartaz da **Associação Portuguesa de Surdos
+(APS)** — uma por letra suportada (A, B, C, D, F, I, L, O, U, V, W, Y). O guia
+("Ver alfabeto") e o jogo mostram-nas automaticamente.
+
+Para **substituir** uma imagem (ex.: por uma fotografia real), basta guardar
+um novo ficheiro com o mesmo nome (ver abaixo).
 
 ## Como nomear
 
