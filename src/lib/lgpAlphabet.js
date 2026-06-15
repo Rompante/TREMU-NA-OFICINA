@@ -94,8 +94,8 @@ function scoreLetter(letter, lm, ext, angles, ratio) {
       // com o C (mão curvada, em que os dedos não estão totalmente abertos).
       return [
         ext.index && ext.middle && ext.ring && ext.pinky ? 1 : 0,
-        below(indexMiddleD, 0.5, 0.3),
-        above(ratio, 1.15, 0.4),
+        below(indexMiddleD, 0.4, 0.25),
+        above(ratio, 1.2, 0.3),
       ];
     case 'F':
       return [
@@ -141,20 +141,22 @@ function scoreLetter(letter, lm, ext, angles, ratio) {
         below(thumbIndexD, 0.5, 0.3),
       ];
     case 'C':
-      // LGP: mão em forma de C (dedos curvados, polegar afastado).
+      // LGP: mão em forma de C (dedos curvados, polegar afastado). Tolerante
+      // no ratio e na abertura do polegar, para apanhar o C mesmo quando os
+      // dedos não estão perfeitamente curvados.
       return [
         !ext.index && !ext.middle && !ext.ring && !ext.pinky ? 1 : 0,
-        above(ratio, 0.8, 0.35),
-        above(thumbIndexD, 0.45, 0.3),
+        above(ratio, 0.72, 0.4),
+        above(thumbIndexD, 0.35, 0.35),
       ];
     case 'A':
       // LGP: punho fechado com o polegar à FRENTE dos dedos (atravessado),
-      // não esticado para cima (isso é o B) nem afastado para o lado (estilo
-      // internacional). Exige o punho bem fechado (ratio baixo) para não
-      // confundir com o O nem com o C (que têm a mão mais aberta/curvada).
+      // não esticado para cima (isso é o B). Aceita um punho NORMAL — não é
+      // preciso apertar como um murro. O ratio (não muito alto) distingue-o
+      // do C (mão curvada e mais aberta).
       return [
         !ext.thumb && !ext.index && !ext.middle && !ext.ring && !ext.pinky ? 1 : 0,
-        below(ratio, 0.5, 0.18),
+        below(ratio, 0.62, 0.3),
       ];
     default:
       return [0];
