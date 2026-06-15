@@ -90,9 +90,12 @@ function scoreLetter(letter, lm, ext, angles, ratio) {
     case 'D':
       // LGP: mão espalmada — os quatro dedos esticados e juntos (na foto
       // oficial aparece deitada/na horizontal). NÃO é o indicador sozinho.
+      // O `above(ratio,...)` exige a mão BEM esticada, para não confundir
+      // com o C (mão curvada, em que os dedos não estão totalmente abertos).
       return [
         ext.index && ext.middle && ext.ring && ext.pinky ? 1 : 0,
         below(indexMiddleD, 0.5, 0.3),
+        above(ratio, 1.15, 0.4),
       ];
     case 'F':
       return [
@@ -100,8 +103,9 @@ function scoreLetter(letter, lm, ext, angles, ratio) {
         below(thumbIndexD, 0.35, 0.3),
       ];
     case 'I':
+      // LGP: só o mindinho esticado (polegar dobrado, senão é o Y).
       return [
-        ext.pinky ? 1 : 0,
+        ext.pinky && !ext.thumb ? 1 : 0,
         !ext.index && !ext.middle && !ext.ring ? 1 : 0,
       ];
     case 'L':
@@ -137,18 +141,20 @@ function scoreLetter(letter, lm, ext, angles, ratio) {
         below(thumbIndexD, 0.5, 0.3),
       ];
     case 'C':
+      // LGP: mão em forma de C (dedos curvados, polegar afastado).
       return [
         !ext.index && !ext.middle && !ext.ring && !ext.pinky ? 1 : 0,
-        above(ratio, 0.85, 0.25),
+        above(ratio, 0.8, 0.35),
         above(thumbIndexD, 0.45, 0.3),
       ];
     case 'A':
       // LGP: punho fechado com o polegar à FRENTE dos dedos (atravessado),
       // não esticado para cima (isso é o B) nem afastado para o lado (estilo
-      // internacional). Por isso não exigimos o polegar longe da palma.
+      // internacional). Exige o punho bem fechado (ratio baixo) para não
+      // confundir com o O nem com o C (que têm a mão mais aberta/curvada).
       return [
         !ext.thumb && !ext.index && !ext.middle && !ext.ring && !ext.pinky ? 1 : 0,
-        below(ratio, 0.55, 0.2),
+        below(ratio, 0.5, 0.18),
       ];
     default:
       return [0];
