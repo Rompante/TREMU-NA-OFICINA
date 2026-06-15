@@ -1,56 +1,55 @@
 import React from 'react';
 import SignVisual from './SignVisual.jsx';
 
-export default function GamePanel({
-  word, hint, letterIndex, score, solved, recognised, onSkip, onGuide,
+// Painel do tradutor: mostra, ao vivo, a letra que estás a fazer e vai
+// juntando as letras registadas para formares palavras.
+export default function TranslatorPanel({
+  text, recognised, onBackspace, onSpace, onClear, onGuide,
 }) {
-  const letters = word.split('');
-  const target = letters[letterIndex];
-  const candidate = recognised?.candidate;
+  const candidate = recognised?.candidate || null;
   const progress = recognised?.progress || 0;
-  const matches = candidate && candidate === target;
+  const done = progress >= 1;
 
   return (
     <section className="panel">
-      <div className="scoreboard">
-        <div><span className="label">Pontos</span><span className="value">{score}</span></div>
-        <div><span className="label">Palavras</span><span className="value">{solved}</span></div>
-      </div>
-
-      <div className="word-row">
-        {letters.map((l, i) => {
-          const done = i < letterIndex;
-          const active = i === letterIndex;
-          const cls = `letter-tile${done ? ' done' : ''}${active ? ' active' : ''}`;
-          return (
-            <div key={i} className={cls}>
-              <span className="letter">{done ? l : active ? l : '·'}</span>
-              {active && progress > 0 && (
-                <div className="progress" style={{ width: `${Math.round(progress * 100)}%` }} />
-              )}
-            </div>
-          );
-        })}
-      </div>
-
-      <p className="hint-text">Dica: <em>{hint}</em></p>
-
-      <div className="recognised">
-        <div className="rec-block">
-          <span className="label">Faz este sinal</span>
-          <SignVisual key={target} letter={target} variant="target" />
-          <span className="big-letter">{target}</span>
-        </div>
-        <div className="rec-block">
-          <span className="label">Estás a fazer</span>
-          <span className={`big-letter detected${matches ? ' ok' : ''}`}>
+      <div className="detect">
+        <span className="label">Estás a fazer</span>
+        <div className="detect-main">
+          {candidate ? (
+            <SignVisual key={candidate} letter={candidate} variant="target" />
+          ) : (
+            <div className="detect-empty">Mostra um sinal à câmara…</div>
+          )}
+          <span className={`big-letter detected${done ? ' ok' : ''}`}>
             {candidate || '—'}
           </span>
+        </div>
+        <div className="detect-bar">
+          <div className="detect-fill" style={{ width: `${Math.round(progress * 100)}%` }} />
+        </div>
+        <span className="detect-hint">
+          {candidate
+            ? done
+              ? 'Letra registada! ✅'
+              : 'Segura o sinal para registar…'
+            : 'Sem mão detetada'}
+        </span>
+      </div>
+
+      <div className="output">
+        <span className="label">O que escreveste</span>
+        <div className="output-text">
+          {text
+            ? <span>{text}</span>
+            : <span className="output-placeholder">faz sinais para escrever</span>}
+          <span className="cursor" aria-hidden="true">|</span>
         </div>
       </div>
 
       <div className="actions">
-        <button className="ghost" onClick={onSkip}>Saltar palavra</button>
+        <button className="ghost" onClick={onSpace}>␣ Espaço</button>
+        <button className="ghost" onClick={onBackspace}>⌫ Apagar</button>
+        <button className="ghost" onClick={onClear}>Limpar</button>
         <button className="ghost" onClick={onGuide}>Ver alfabeto</button>
       </div>
     </section>
