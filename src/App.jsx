@@ -1,37 +1,65 @@
 import React, { useCallback, useRef, useState } from 'react';
 import CameraView from './components/CameraView.jsx';
-import TranslatorPanel from './components/GamePanel.jsx';
+import WordleGame from './components/WordleGame.jsx';
 import Calibration from './components/Calibration.jsx';
 import AlphabetGuide from './components/AlphabetGuide.jsx';
 import { loadTemplates, saveTemplates, clearTemplates } from './lib/calibration.js';
+import { pickRandomWord } from './lib/words.js';
+import { evaluateGuess } from './lib/wordle.js';
 
 const HOLD_FRAMES = 14;
-const MAX_LEN = 40;
-const APP_VERSION = '1.1';
+const WORD_LEN = 4;
+const MAX_TRIES = 6;
+const APP_VERSION = '1.2';
 
 export default function App() {
   const [started, setStarted] = useState(false);
-  const [mode, setMode] = useState('translate'); // 'translate' | 'calibrate'
+  const [mode, setMode] = useState('play'); // 'play' | 'calibrate'
   const [templates, setTemplates] = useState(() => loadTemplates());
-  const [text, setText] = useState('');
   const [recognised, setRecognised] = useState({ candidate: null, confidence: 0, progress: 0 });
   const [showGuide, setShowGuide] = useState(false);
+
+  // Estado do jogo (Wordle gestual)
+  const [secret, setSecret] = useState(() => pickRandomWord()[0]);
+  const [rows, setRows] = useState([]); // [{ guess, result }]
+  const [current, setCurrent] = useState('');
+  const [status, setStatus] = useState('playing'); // 'playing' | 'won' | 'lost'
+
   const latestLmRef = useRef(null);
-  const modeRef = useRef(mode);
-  modeRef.current = mode;
+  const historyRef = useRef([]);
+  // Espelho do estado para o callback da câmara (que é estável) ler sempre o atual.
+  const stateRef = useRef({});
+  stateRef.current = { mode, status };
 
   const calibratedCount = Object.keys(templates).length;
 
   const onRecognition = useCallback((info) => {
     setRecognised(info);
-    if (info.committed && modeRef.current === 'translate') {
-      setText((t) => (t + info.committed).slice(-MAX_LEN));
+    const s = stateRef.current;
+    if (info.committed && s.mode === 'play' && s.status === 'playing') {
+      setCurrent((c) => (c.length < WORD_LEN ? c + info.committed : c));
     }
   }, []);
 
-  const backspace = useCallback(() => setText((t) => t.slice(0, -1)), []);
-  const addSpace = useCallback(() => setText((t) => (t + ' ').slice(-MAX_LEN)), []);
-  const clearText = useCallback(() => setText(''), []);
+  const backspace = useCallback(() => setCurrent((c) => c.slice(0, -1)), []);
+
+  const submit = useCallback(() => {
+    if (current.length !== WORD_LEN || status !== 'playing') return;
+    const result = evaluateGuess(current, secret);
+    const next = [...rows, { guess: current, result }];
+    setRows(next);
+    setCurrent('');
+    if (current === secret) setStatus('won');
+    else if (next.length >= MAX_TRIES) setStatus('lost');
+  }, [current, secret, rows, status]);
+
+  const newGame = useCallback(() => {
+    historyRef.current = [...historyRef.current, secret].slice(-8);
+    setSecret(pickRandomWord(historyRef.current)[0]);
+    setRows([]);
+    setCurrent('');
+    setStatus('playing');
+  }, [secret]);
 
   const captureTemplate = useCallback((letter, tpl) => {
     setTemplates((prev) => {
@@ -47,7 +75,7 @@ export default function App() {
 
   const start = () => {
     setStarted(true);
-    setMode(calibratedCount >= 2 ? 'translate' : 'calibrate');
+    setMode(calibratedCount >= 2 ? 'play' : 'calibrate');
   };
 
   return (
@@ -55,7 +83,7 @@ export default function App() {
       <header className="header">
         <h1 className="brand">TREMU NA OFICINA</h1>
         <p className="tagline">
-          Tradutor de Língua Gestual Portuguesa — faz o sinal e a app diz a letra
+          Adivinha a palavra de 4 letras — soletra as tentativas em Língua Gestual Portuguesa
         </p>
       </header>
 
@@ -66,15 +94,15 @@ export default function App() {
           <div className="toolbar">
             <div className="tabs">
               <button
-                className={`tab${mode === 'translate' ? ' active' : ''}`}
-                onClick={() => setMode('translate')}
-              >Tradutor</button>
+                className={`tab${mode === 'play' ? ' active' : ''}`}
+                onClick={() => setMode('play')}
+              >Jogar</button>
               <button
                 className={`tab${mode === 'calibrate' ? ' active' : ''}`}
                 onClick={() => setMode('calibrate')}
               >Calibração ({calibratedCount}/12)</button>
             </div>
-            {mode === 'translate' && calibratedCount < 12 && (
+            {mode === 'play' && calibratedCount < 12 && (
               <span className="toolbar-warn">
                 ⚠️ Calibra todas as letras para o reconhecimento funcionar bem.
               </span>
@@ -94,15 +122,18 @@ export default function App() {
                 latestLmRef={latestLmRef}
                 onCapture={captureTemplate}
                 onClearAll={resetCalibration}
-                onDone={() => setMode('translate')}
+                onDone={() => setMode('play')}
               />
             ) : (
-              <TranslatorPanel
-                text={text}
+              <WordleGame
+                secret={secret}
+                rows={rows}
+                current={current}
+                status={status}
                 recognised={recognised}
                 onBackspace={backspace}
-                onSpace={addSpace}
-                onClear={clearText}
+                onSubmit={submit}
+                onNewGame={newGame}
                 onGuide={() => setShowGuide(true)}
               />
             )}
@@ -124,20 +155,20 @@ function Intro({ onStart, onGuide }) {
     <section className="intro">
       <h2>Bem-vindo(a)!</h2>
       <p>
-        Faz um sinal do alfabeto manual da <strong>LGP</strong> à frente da câmara
-        e a app <strong>diz-te que letra estás a fazer</strong>, juntando as letras
-        para formares palavras.
+        Há uma <strong>palavra secreta de 4 letras</strong>. Tens <strong>6
+        tentativas</strong> para a adivinhar — e soletras cada tentativa com a
+        mão, usando o alfabeto manual da <strong>LGP</strong> à frente da câmara.
       </p>
       <p>
-        Primeiro há uma <strong>calibração rápida</strong>: fazes cada sinal uma
-        vez para a app aprender a <strong>tua</strong> mão. Assim o reconhecimento
-        fica muito mais certeiro (fica guardado no teu dispositivo).
+        As células pintam-se: <span className="chip ok">verde</span> = letra certa
+        no sítio certo, <span className="chip warn">amarelo</span> = existe mas
+        noutro sítio, <span className="chip off">cinzento</span> = não existe.
       </p>
-      <ul>
-        <li>Mantém uma só mão à frente da câmara, com boa luz.</li>
-        <li>Letras suportadas: A, B, C, D, F, I, L, O, U, V, W, Y.</li>
-        <li>Baixa a mão entre letras para escreveres a mesma letra duas vezes.</li>
-      </ul>
+      <p>
+        Antes de jogar há uma <strong>calibração rápida</strong>: fazes cada sinal
+        uma vez para a app aprender a <strong>tua</strong> mão (fica guardada no
+        teu dispositivo). Assim o reconhecimento fica muito mais certeiro.
+      </p>
       <div className="intro-actions">
         <button className="primary" onClick={onStart}>Começar</button>
         <button className="ghost" onClick={onGuide}>Ver alfabeto</button>
