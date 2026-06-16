@@ -301,6 +301,7 @@ button:active { transform: translateY(1px); }
 .detect.compact { width: 100%; padding: 12px; gap: 8px; }
 .detect-line { display: flex; align-items: center; justify-content: center; gap: 14px; }
 .detect.compact .big-letter { font-size: 40px; }
+.conf { color: var(--fg-dim); font-size: 14px; font-variant-numeric: tabular-nums; }
 
 /* Etiquetas coloridas na introdução */
 .chip {

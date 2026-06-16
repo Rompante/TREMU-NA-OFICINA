@@ -9,7 +9,7 @@ import { DEFAULT_TEMPLATES } from './lib/defaultTemplates.js';
 const HOLD_FRAMES = 14;
 const WORD_LEN = 4;
 const MAX_TRIES = 6;
-const APP_VERSION = '1.5';
+const APP_VERSION = '1.6';
 
 // Calibração embutida — o jogo reconhece os sinais sem ser preciso calibrar.
 const TEMPLATES = DEFAULT_TEMPLATES;
