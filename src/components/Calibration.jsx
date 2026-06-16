@@ -16,6 +16,22 @@ export default function Calibration({ templates, latestLmRef, onCapture, onClear
   const next = () => setI((v) => (v + 1) % SUPPORTED_LETTERS.length);
   const prev = () => setI((v) => (v - 1 + SUPPORTED_LETTERS.length) % SUPPORTED_LETTERS.length);
 
+  function exportar() {
+    const data = JSON.stringify(templates);
+    try { navigator.clipboard?.writeText(data); } catch { /* ignora */ }
+    try {
+      const blob = new Blob([data], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'calibracao-lgp.json';
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch { /* ignora */ }
+    setFlash('Calibração exportada (ficheiro descarregado e copiado).');
+    setTimeout(() => setFlash(null), 2500);
+  }
+
   async function grava() {
     if (busy) return;
     setBusy(true);
@@ -81,6 +97,7 @@ export default function Calibration({ templates, latestLmRef, onCapture, onClear
 
       <div className="actions">
         <button className="ghost" onClick={onClearAll}>Recomeçar</button>
+        <button className="ghost" onClick={exportar} disabled={!doneCount}>Exportar calibração</button>
         <button className="primary" onClick={onDone}>
           {doneCount >= SUPPORTED_LETTERS.length ? 'Concluir' : `Concluir (faltam ${SUPPORTED_LETTERS.length - doneCount})`}
         </button>
