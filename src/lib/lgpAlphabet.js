@@ -184,6 +184,61 @@ export function classify(lm) {
   return { ...best, ext, ratio };
 }
 
+// ---------------------------------------------------------------------------
+// Reconhecimento por CALIBRAÇÃO (comparação com modelos do próprio utilizador)
+// ---------------------------------------------------------------------------
+// Muito mais fiável que as regras geométricas: o utilizador grava cada sinal
+// uma vez e depois comparamos a mão atual com esses modelos (o mais parecido
+// ganha). Normalizamos a mão (posição, tamanho e rotação) para a comparação
+// não depender de onde/como a mão está no ecrã.
+
+const Z_WEIGHT = 0.5; // a profundidade do MediaPipe é mais ruidosa -> menos peso
+const DIST_SCALE = 1.5; // distância a partir da qual a confiança chega a ~0
+
+export function normalizeLandmarks(lm) {
+  const w = lm[0];
+  const pts = lm.map((p) => [p.x - w.x, p.y - w.y, (p.z || 0) - (w.z || 0)]);
+  const mcp = pts[LM.MIDDLE_MCP];
+  const scale = Math.hypot(mcp[0], mcp[1], mcp[2]) || 1e-6;
+  // rodar no plano xy para o eixo da mão (pulso->MCP médio) apontar "para cima"
+  const ang = Math.atan2(mcp[1], mcp[0]);
+  const rot = -Math.PI / 2 - ang;
+  const cos = Math.cos(rot), sin = Math.sin(rot);
+  const out = [];
+  for (const [x, y, z] of pts) {
+    out.push((x * cos - y * sin) / scale);
+    out.push((x * sin + y * cos) / scale);
+    out.push((z / scale) * Z_WEIGHT);
+  }
+  return out;
+}
+
+function sqDist(a, b) {
+  let s = 0;
+  for (let i = 0; i < a.length; i++) { const d = a[i] - b[i]; s += d * d; }
+  return s;
+}
+
+// templates: { [letra]: number[] }  (vetor já normalizado)
+export function classifyWithTemplates(lm, templates) {
+  const v = normalizeLandmarks(lm);
+  let best = null, bestD = Infinity, secondD = Infinity;
+  for (const letter of Object.keys(templates)) {
+    const d = sqDist(v, templates[letter]);
+    if (d < bestD) { secondD = bestD; bestD = d; best = letter; }
+    else if (d < secondD) { secondD = d; }
+  }
+  if (best === null) return { letter: null, confidence: 0, ext: null };
+  const closeness = Math.max(0, 1 - bestD / DIST_SCALE);
+  const margin = secondD === Infinity ? 1 : Math.max(0, (secondD - bestD) / (secondD + 1e-6));
+  const confidence = Math.max(0, Math.min(1, 0.65 * closeness + 0.35 * margin));
+  return { letter: best, confidence, ext: null };
+}
+
+export function createTemplate(lm) {
+  return normalizeLandmarks(lm);
+}
+
 export function createStabilityFilter({ holdFrames = 12, minConf = 0.75 } = {}) {
   let last = null;
   let count = 0;

@@ -1,23 +1,30 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useRef, useState } from 'react';
 import CameraView from './components/CameraView.jsx';
 import TranslatorPanel from './components/GamePanel.jsx';
+import Calibration from './components/Calibration.jsx';
 import AlphabetGuide from './components/AlphabetGuide.jsx';
+import { loadTemplates, saveTemplates, clearTemplates } from './lib/calibration.js';
 
 const HOLD_FRAMES = 14;
 const MAX_LEN = 40;
-const APP_VERSION = '1.0';
+const APP_VERSION = '1.1';
 
 export default function App() {
   const [started, setStarted] = useState(false);
+  const [mode, setMode] = useState('translate'); // 'translate' | 'calibrate'
+  const [templates, setTemplates] = useState(() => loadTemplates());
   const [text, setText] = useState('');
   const [recognised, setRecognised] = useState({ candidate: null, confidence: 0, progress: 0 });
   const [showGuide, setShowGuide] = useState(false);
+  const latestLmRef = useRef(null);
+  const modeRef = useRef(mode);
+  modeRef.current = mode;
 
-  // A câmara avisa sempre que muda a deteção. Quando uma letra fica "registada"
-  // (seguraste o sinal o tempo suficiente), juntamo-la ao texto.
+  const calibratedCount = Object.keys(templates).length;
+
   const onRecognition = useCallback((info) => {
     setRecognised(info);
-    if (info.committed) {
+    if (info.committed && modeRef.current === 'translate') {
       setText((t) => (t + info.committed).slice(-MAX_LEN));
     }
   }, []);
@@ -25,6 +32,23 @@ export default function App() {
   const backspace = useCallback(() => setText((t) => t.slice(0, -1)), []);
   const addSpace = useCallback(() => setText((t) => (t + ' ').slice(-MAX_LEN)), []);
   const clearText = useCallback(() => setText(''), []);
+
+  const captureTemplate = useCallback((letter, tpl) => {
+    setTemplates((prev) => {
+      const next = { ...prev, [letter]: tpl };
+      saveTemplates(next);
+      return next;
+    });
+  }, []);
+  const resetCalibration = useCallback(() => {
+    clearTemplates();
+    setTemplates({});
+  }, []);
+
+  const start = () => {
+    setStarted(true);
+    setMode(calibratedCount >= 2 ? 'translate' : 'calibrate');
+  };
 
   return (
     <div className="app">
@@ -36,19 +60,54 @@ export default function App() {
       </header>
 
       {!started ? (
-        <Intro onStart={() => setStarted(true)} onGuide={() => setShowGuide(true)} />
+        <Intro onStart={start} onGuide={() => setShowGuide(true)} />
       ) : (
-        <main className="layout">
-          <CameraView holdFrames={HOLD_FRAMES} onRecognition={onRecognition} />
-          <TranslatorPanel
-            text={text}
-            recognised={recognised}
-            onBackspace={backspace}
-            onSpace={addSpace}
-            onClear={clearText}
-            onGuide={() => setShowGuide(true)}
-          />
-        </main>
+        <>
+          <div className="toolbar">
+            <div className="tabs">
+              <button
+                className={`tab${mode === 'translate' ? ' active' : ''}`}
+                onClick={() => setMode('translate')}
+              >Tradutor</button>
+              <button
+                className={`tab${mode === 'calibrate' ? ' active' : ''}`}
+                onClick={() => setMode('calibrate')}
+              >Calibração ({calibratedCount}/12)</button>
+            </div>
+            {mode === 'translate' && calibratedCount < 12 && (
+              <span className="toolbar-warn">
+                ⚠️ Calibra todas as letras para o reconhecimento funcionar bem.
+              </span>
+            )}
+          </div>
+
+          <main className="layout">
+            <CameraView
+              holdFrames={HOLD_FRAMES}
+              onRecognition={onRecognition}
+              templates={templates}
+              latestLmRef={latestLmRef}
+            />
+            {mode === 'calibrate' ? (
+              <Calibration
+                templates={templates}
+                latestLmRef={latestLmRef}
+                onCapture={captureTemplate}
+                onClearAll={resetCalibration}
+                onDone={() => setMode('translate')}
+              />
+            ) : (
+              <TranslatorPanel
+                text={text}
+                recognised={recognised}
+                onBackspace={backspace}
+                onSpace={addSpace}
+                onClear={clearText}
+                onGuide={() => setShowGuide(true)}
+              />
+            )}
+          </main>
+        </>
       )}
 
       {showGuide && <AlphabetGuide onClose={() => setShowGuide(false)} />}
@@ -65,9 +124,14 @@ function Intro({ onStart, onGuide }) {
     <section className="intro">
       <h2>Bem-vindo(a)!</h2>
       <p>
-        Faz um sinal do alfabeto manual da <strong>LGP</strong> à frente da câmara.
-        A app reconhece e <strong>diz-te que letra estás a fazer</strong>. Segura o
-        sinal um instante e a letra junta-se às outras, para formares palavras.
+        Faz um sinal do alfabeto manual da <strong>LGP</strong> à frente da câmara
+        e a app <strong>diz-te que letra estás a fazer</strong>, juntando as letras
+        para formares palavras.
+      </p>
+      <p>
+        Primeiro há uma <strong>calibração rápida</strong>: fazes cada sinal uma
+        vez para a app aprender a <strong>tua</strong> mão. Assim o reconhecimento
+        fica muito mais certeiro (fica guardado no teu dispositivo).
       </p>
       <ul>
         <li>Mantém uma só mão à frente da câmara, com boa luz.</li>
