@@ -231,12 +231,18 @@ function sqDist(a, b) {
   return s;
 }
 
-// templates: { [letra]: number[] }  (vetor já normalizado)
+// templates: { [letra]: number[][] }  (VÁRIAS amostras normalizadas por letra).
+// Para cada letra usamos a amostra mais próxima (a mão mais parecida), e depois
+// escolhemos a melhor letra. Aceita também uma só amostra (number[]).
 export function classifyWithTemplates(lm, templates) {
   const v = normalizeLandmarks(lm);
   let best = null, bestD = Infinity, secondD = Infinity;
   for (const letter of Object.keys(templates)) {
-    const d = sqDist(v, templates[letter]);
+    let samples = templates[letter];
+    if (!samples || !samples.length) continue;
+    if (typeof samples[0] === 'number') samples = [samples]; // retrocompatível
+    let d = Infinity;
+    for (const s of samples) { const sd = sqDist(v, s); if (sd < d) d = sd; }
     if (d < bestD) { secondD = bestD; bestD = d; best = letter; }
     else if (d < secondD) { secondD = d; }
   }
