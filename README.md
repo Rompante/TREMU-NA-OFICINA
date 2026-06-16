@@ -1,11 +1,17 @@
 # TREMU NA OFICINA
 
-Aplicação de inclusão social em **React + JavaScript**: um **tradutor** do
-alfabeto manual da **Língua Gestual Portuguesa (LGP)**. O utilizador faz um
-sinal à frente da câmara e a app **reconhece e diz que letra é** — segurando o
-sinal um instante, a letra junta-se às anteriores para formar palavras (com
-apagar, espaço e limpar). O reconhecimento corre **inteiramente no navegador**
-— não há servidores nem APIs externas a serem chamadas durante o uso.
+Jogo de inclusão social em **React + JavaScript** no estilo "palavra do dia"
+(Wordle), mas **gestual**: há uma palavra secreta de **4 letras** e o jogador
+tem **6 tentativas** para a adivinhar, **soletrando** cada tentativa com a mão
+através do alfabeto manual da **Língua Gestual Portuguesa (LGP)** à frente da
+câmara. As células pintam-se a verde (letra certa no sítio certo), amarelo
+(existe noutro sítio) ou cinzento (não existe). O reconhecimento corre
+**inteiramente no navegador** — sem servidores nem APIs externas durante o jogo.
+
+Para o reconhecimento ser fiável há uma **calibração**: o jogador faz cada
+sinal uma vez e a app aprende a forma da **sua** mão (guardada no dispositivo,
+via `localStorage`), passando a classificar por comparação com esses modelos —
+muito mais robusto do que regras geométricas genéricas.
 
 ## Como funciona
 

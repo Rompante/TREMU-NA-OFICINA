@@ -265,6 +265,56 @@ button:active { transform: translateY(1px); }
 .calib-chip.done { background: rgba(74, 222, 128, .15); border-color: rgba(74, 222, 128, .5); color: var(--ok); }
 .calib-chip.current { box-shadow: 0 0 0 3px rgba(56, 189, 248, .35); border-color: var(--accent); color: var(--fg); }
 
+/* ---- Jogo (Wordle gestual) ---- */
+.panel.game { gap: 16px; align-items: center; }
+.game-status { min-height: 28px; }
+.game-status .msg { font-size: 18px; color: var(--fg-dim); }
+.game-status .msg.ok { color: var(--ok); font-weight: 800; }
+.game-status .msg.bad { color: var(--bad); font-weight: 700; }
+.game-status .msg strong { letter-spacing: 2px; }
+
+.board { display: grid; gap: 9px; }
+.board-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 9px; }
+.cell {
+  width: clamp(48px, 13vw, 62px);
+  aspect-ratio: 1;
+  display: flex; align-items: center; justify-content: center;
+  font-size: clamp(24px, 6vw, 32px); font-weight: 800;
+  text-transform: uppercase;
+  background: var(--bg-elev);
+  border: 2px solid var(--border);
+  border-radius: 12px;
+  color: var(--fg);
+}
+.cell.filled { border-color: var(--accent); animation: cellPop .12s ease; }
+.cell.reveal { animation: cellFlip .5s ease both; }
+.cell.correct { background: var(--ok); color: #06121f; border-color: transparent; }
+.cell.present { background: var(--accent-2); color: #06121f; border-color: transparent; }
+.cell.absent  { background: #334155; color: #cbd5e1; border-color: transparent; }
+@keyframes cellPop { 0% { transform: scale(.85); } 100% { transform: scale(1); } }
+@keyframes cellFlip {
+  0% { transform: rotateX(0); }
+  50% { transform: rotateX(90deg); }
+  100% { transform: rotateX(0); }
+}
+
+.detect.compact { width: 100%; padding: 12px; gap: 8px; }
+.detect-line { display: flex; align-items: center; justify-content: center; gap: 14px; }
+.detect.compact .big-letter { font-size: 40px; }
+
+/* Etiquetas coloridas na introdução */
+.chip {
+  display: inline-block; padding: 1px 8px; border-radius: 6px;
+  font-weight: 700; font-size: 14px; color: #06121f;
+}
+.chip.ok { background: var(--ok); }
+.chip.warn { background: var(--accent-2); }
+.chip.off { background: #334155; color: #cbd5e1; }
+
+@media (prefers-reduced-motion: reduce) {
+  .cell.filled, .cell.reveal { animation: none; }
+}
+
 /* ---- Feedback ao acertar (animações puras em CSS) ---- */
 
 /* A letra "salta" e brilha a verde quando fica concluída. */
