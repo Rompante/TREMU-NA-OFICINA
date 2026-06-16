@@ -2,7 +2,9 @@
 // de cada sinal feito pela sua própria mão). Fica no localStorage do browser,
 // por isso não sai do dispositivo e mantém-se entre sessões.
 
-const KEY = 'tno-lgp-templates-v1';
+// v2: a normalização mudou (peso nas pontas dos dedos), por isso os modelos
+// antigos são incompatíveis — esta versão obriga a calibrar de novo.
+const KEY = 'tno-lgp-templates-v2';
 
 export function loadTemplates() {
   try {

@@ -192,12 +192,22 @@ export function classify(lm) {
 // ganha). Normalizamos a mão (posição, tamanho e rotação) para a comparação
 // não depender de onde/como a mão está no ecrã.
 
-const Z_WEIGHT = 0.5; // a profundidade do MediaPipe é mais ruidosa -> menos peso
-const DIST_SCALE = 1.5; // distância a partir da qual a confiança chega a ~0
+const Z_WEIGHT = 0.25; // a profundidade do MediaPipe é ruidosa -> pouco peso
+const DIST_SCALE = 2.0; // distância a partir da qual a "proximidade" chega a ~0
+// Peso de cada ponto da mão na comparação. As PONTAS dos dedos são o que mais
+// distingue sinais parecidos (ex.: C aberto vs punho A), por isso pesam mais.
+// O pulso é a origem (não discrimina) -> peso 0.
+const LM_WEIGHT = (() => {
+  const w = new Array(21).fill(1);
+  w[0] = 0;
+  for (const t of [4, 8, 12, 16, 20]) w[t] = 2.4; // pontas dos dedos
+  for (const d of [3, 7, 11, 15, 19]) w[d] = 1.4; // falanges distais
+  return w;
+})();
 
 export function normalizeLandmarks(lm) {
-  const w = lm[0];
-  const pts = lm.map((p) => [p.x - w.x, p.y - w.y, (p.z || 0) - (w.z || 0)]);
+  const w0 = lm[0];
+  const pts = lm.map((p) => [p.x - w0.x, p.y - w0.y, (p.z || 0) - (w0.z || 0)]);
   const mcp = pts[LM.MIDDLE_MCP];
   const scale = Math.hypot(mcp[0], mcp[1], mcp[2]) || 1e-6;
   // rodar no plano xy para o eixo da mão (pulso->MCP médio) apontar "para cima"
@@ -205,10 +215,12 @@ export function normalizeLandmarks(lm) {
   const rot = -Math.PI / 2 - ang;
   const cos = Math.cos(rot), sin = Math.sin(rot);
   const out = [];
-  for (const [x, y, z] of pts) {
-    out.push((x * cos - y * sin) / scale);
-    out.push((x * sin + y * cos) / scale);
-    out.push((z / scale) * Z_WEIGHT);
+  for (let i = 0; i < pts.length; i++) {
+    const [x, y, z] = pts[i];
+    const wt = Math.sqrt(LM_WEIGHT[i]);
+    out.push(((x * cos - y * sin) / scale) * wt);
+    out.push(((x * sin + y * cos) / scale) * wt);
+    out.push((z / scale) * Z_WEIGHT * wt);
   }
   return out;
 }
@@ -230,8 +242,11 @@ export function classifyWithTemplates(lm, templates) {
   }
   if (best === null) return { letter: null, confidence: 0, ext: null };
   const closeness = Math.max(0, 1 - bestD / DIST_SCALE);
+  // Margem = quão melhor é o vencedor face ao 2.º lugar. Damos-lhe mais peso:
+  // se duas letras estiverem renhidas (ex.: A vs C), a confiança baixa e o
+  // sinal não é registado, evitando trocar letras.
   const margin = secondD === Infinity ? 1 : Math.max(0, (secondD - bestD) / (secondD + 1e-6));
-  const confidence = Math.max(0, Math.min(1, 0.65 * closeness + 0.35 * margin));
+  const confidence = Math.max(0, Math.min(1, 0.4 * closeness + 0.6 * margin));
   return { letter: best, confidence, ext: null };
 }
 
