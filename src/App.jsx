@@ -1,21 +1,21 @@
 import React, { useCallback, useRef, useState } from 'react';
 import CameraView from './components/CameraView.jsx';
 import WordleGame from './components/WordleGame.jsx';
-import Calibration from './components/Calibration.jsx';
 import AlphabetGuide from './components/AlphabetGuide.jsx';
-import { loadTemplates, saveTemplates, clearTemplates } from './lib/calibration.js';
 import { pickRandomWord } from './lib/words.js';
 import { evaluateGuess } from './lib/wordle.js';
+import { DEFAULT_TEMPLATES } from './lib/defaultTemplates.js';
 
 const HOLD_FRAMES = 14;
 const WORD_LEN = 4;
 const MAX_TRIES = 6;
-const APP_VERSION = '1.4';
+const APP_VERSION = '1.5';
+
+// Calibração embutida — o jogo reconhece os sinais sem ser preciso calibrar.
+const TEMPLATES = DEFAULT_TEMPLATES;
 
 export default function App() {
   const [started, setStarted] = useState(false);
-  const [mode, setMode] = useState('play'); // 'play' | 'calibrate'
-  const [templates, setTemplates] = useState(() => loadTemplates());
   const [recognised, setRecognised] = useState({ candidate: null, confidence: 0, progress: 0 });
   const [showGuide, setShowGuide] = useState(false);
 
@@ -25,18 +25,13 @@ export default function App() {
   const [current, setCurrent] = useState('');
   const [status, setStatus] = useState('playing'); // 'playing' | 'won' | 'lost'
 
-  const latestLmRef = useRef(null);
   const historyRef = useRef([]);
-  // Espelho do estado para o callback da câmara (que é estável) ler sempre o atual.
-  const stateRef = useRef({});
-  stateRef.current = { mode, status };
-
-  const calibratedCount = Object.keys(templates).length;
+  const statusRef = useRef(status);
+  statusRef.current = status;
 
   const onRecognition = useCallback((info) => {
     setRecognised(info);
-    const s = stateRef.current;
-    if (info.committed && s.mode === 'play' && s.status === 'playing') {
+    if (info.committed && statusRef.current === 'playing') {
       setCurrent((c) => (c.length < WORD_LEN ? c + info.committed : c));
     }
   }, []);
@@ -61,23 +56,6 @@ export default function App() {
     setStatus('playing');
   }, [secret]);
 
-  const captureTemplate = useCallback((letter, tpl) => {
-    setTemplates((prev) => {
-      const next = { ...prev, [letter]: tpl };
-      saveTemplates(next);
-      return next;
-    });
-  }, []);
-  const resetCalibration = useCallback(() => {
-    clearTemplates();
-    setTemplates({});
-  }, []);
-
-  const start = () => {
-    setStarted(true);
-    setMode(calibratedCount >= 2 ? 'play' : 'calibrate');
-  };
-
   return (
     <div className="app">
       <header className="header">
@@ -88,57 +66,26 @@ export default function App() {
       </header>
 
       {!started ? (
-        <Intro onStart={start} onGuide={() => setShowGuide(true)} />
+        <Intro onStart={() => setStarted(true)} onGuide={() => setShowGuide(true)} />
       ) : (
-        <>
-          <div className="toolbar">
-            <div className="tabs">
-              <button
-                className={`tab${mode === 'play' ? ' active' : ''}`}
-                onClick={() => setMode('play')}
-              >Jogar</button>
-              <button
-                className={`tab${mode === 'calibrate' ? ' active' : ''}`}
-                onClick={() => setMode('calibrate')}
-              >Calibração ({calibratedCount}/12)</button>
-            </div>
-            {mode === 'play' && calibratedCount < 12 && (
-              <span className="toolbar-warn">
-                ⚠️ Calibra todas as letras para o reconhecimento funcionar bem.
-              </span>
-            )}
-          </div>
-
-          <main className="layout">
-            <CameraView
-              holdFrames={HOLD_FRAMES}
-              onRecognition={onRecognition}
-              templates={templates}
-              latestLmRef={latestLmRef}
-            />
-            {mode === 'calibrate' ? (
-              <Calibration
-                templates={templates}
-                latestLmRef={latestLmRef}
-                onCapture={captureTemplate}
-                onClearAll={resetCalibration}
-                onDone={() => setMode('play')}
-              />
-            ) : (
-              <WordleGame
-                secret={secret}
-                rows={rows}
-                current={current}
-                status={status}
-                recognised={recognised}
-                onBackspace={backspace}
-                onSubmit={submit}
-                onNewGame={newGame}
-                onGuide={() => setShowGuide(true)}
-              />
-            )}
-          </main>
-        </>
+        <main className="layout">
+          <CameraView
+            holdFrames={HOLD_FRAMES}
+            onRecognition={onRecognition}
+            templates={TEMPLATES}
+          />
+          <WordleGame
+            secret={secret}
+            rows={rows}
+            current={current}
+            status={status}
+            recognised={recognised}
+            onBackspace={backspace}
+            onSubmit={submit}
+            onNewGame={newGame}
+            onGuide={() => setShowGuide(true)}
+          />
+        </main>
       )}
 
       {showGuide && <AlphabetGuide onClose={() => setShowGuide(false)} />}
@@ -164,13 +111,13 @@ function Intro({ onStart, onGuide }) {
         no sítio certo, <span className="chip warn">amarelo</span> = existe mas
         noutro sítio, <span className="chip off">cinzento</span> = não existe.
       </p>
-      <p>
-        Antes de jogar há uma <strong>calibração rápida</strong>: fazes cada sinal
-        uma vez para a app aprender a <strong>tua</strong> mão (fica guardada no
-        teu dispositivo). Assim o reconhecimento fica muito mais certeiro.
-      </p>
+      <ul>
+        <li>Mantém uma só mão à frente da câmara, com boa luz.</li>
+        <li>Faz uma letra, baixa a mão, e faz a seguinte.</li>
+        <li>Letras suportadas: A, B, C, D, F, I, L, O, U, V, W, Y.</li>
+      </ul>
       <div className="intro-actions">
-        <button className="primary" onClick={onStart}>Começar</button>
+        <button className="primary" onClick={onStart}>Começar a jogar</button>
         <button className="ghost" onClick={onGuide}>Ver alfabeto</button>
       </div>
     </section>

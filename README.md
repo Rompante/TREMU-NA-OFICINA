@@ -8,10 +8,12 @@ câmara. As células pintam-se a verde (letra certa no sítio certo), amarelo
 (existe noutro sítio) ou cinzento (não existe). O reconhecimento corre
 **inteiramente no navegador** — sem servidores nem APIs externas durante o jogo.
 
-Para o reconhecimento ser fiável há uma **calibração**: o jogador faz cada
-sinal uma vez e a app aprende a forma da **sua** mão (guardada no dispositivo,
-via `localStorage`), passando a classificar por comparação com esses modelos —
-muito mais robusto do que regras geométricas genéricas.
+O reconhecimento usa **comparação com modelos** (calibração embutida em
+[`src/lib/defaultTemplates.js`](src/lib/defaultTemplates.js)): a app já traz
+gravada a forma dos 12 sinais e classifica a mão atual pelo modelo mais
+parecido — muito mais robusto do que regras geométricas genéricas, e sem o
+jogador ter de calibrar nada. A mão é normalizada (posição, tamanho e rotação),
+por isso funciona para várias pessoas.
 
 ## Como funciona
 
