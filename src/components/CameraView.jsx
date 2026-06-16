@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { loadHandLandmarker, attachCamera, stopCamera } from '../lib/handTracker.js';
-import { classify, createStabilityFilter } from '../lib/lgpAlphabet.js';
+import { classify, classifyWithTemplates, createStabilityFilter } from '../lib/lgpAlphabet.js';
 
 const HAND_CONNECTIONS = [
   [0,1],[1,2],[2,3],[3,4],
@@ -11,22 +11,24 @@ const HAND_CONNECTIONS = [
   [0,17],
 ];
 
-export default function CameraView({ holdFrames, onRecognition }) {
+export default function CameraView({ holdFrames, onRecognition, templates, latestLmRef }) {
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
   const streamRef = useRef(null);
   const rafRef = useRef(0);
   const filterRef = useRef(null);
   if (!filterRef.current) {
-    filterRef.current = createStabilityFilter({ holdFrames, minConf: 0.78 });
+    filterRef.current = createStabilityFilter({ holdFrames, minConf: 0.6 });
   }
   const onRecognitionRef = useRef(onRecognition);
+  const templatesRef = useRef(templates);
   const lastVideoTimeRef = useRef(-1);
   const lastSentRef = useRef(null);
   const [status, setStatus] = useState('A inicializar câmara…');
   const [error, setError] = useState(null);
 
   useEffect(() => { onRecognitionRef.current = onRecognition; }, [onRecognition]);
+  useEffect(() => { templatesRef.current = templates; }, [templates]);
 
   useEffect(() => {
     let cancelled = false;
@@ -93,7 +95,13 @@ export default function CameraView({ holdFrames, onRecognition }) {
         if (result && result.landmarks && result.landmarks.length) {
           const lm = result.landmarks[0];
           drawHand(ctx, lm, canvas.width, canvas.height);
-          recognised = classify(lm);
+          if (latestLmRef) latestLmRef.current = lm;
+          const tpl = templatesRef.current;
+          recognised = (tpl && Object.keys(tpl).length >= 2)
+            ? classifyWithTemplates(lm, tpl)
+            : classify(lm);
+        } else if (latestLmRef) {
+          latestLmRef.current = null;
         }
         ctx.restore();
         const filt = filterRef.current.push(recognised);
