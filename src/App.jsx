@@ -10,7 +10,7 @@ import { evaluateGuess } from './lib/wordle.js';
 const HOLD_FRAMES = 14;
 const WORD_LEN = 4;
 const MAX_TRIES = 6;
-const APP_VERSION = '1.2';
+const APP_VERSION = '1.3';
 
 export default function App() {
   const [started, setStarted] = useState(false);
