@@ -61,6 +61,9 @@ export default function WordleGame({
             <span className={`big-letter detected${progress >= 1 ? ' ok' : ''}`}>
               {candidate || '—'}
             </span>
+            {candidate && (
+              <span className="conf">{Math.round((recognised?.confidence || 0) * 100)}%</span>
+            )}
           </div>
           <div className="detect-bar">
             <div className="detect-fill" style={{ width: `${Math.round(progress * 100)}%` }} />
