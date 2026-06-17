@@ -271,6 +271,12 @@ export function classifyWithTemplates(lm, templates) {
       const p = palmSize(lm);
       const imd = dist(lm[LM.INDEX_TIP], lm[LM.MIDDLE_TIP]) / p;
       best = imd > 0.5 ? 'V' : 'U'; resolved = true;
+    } else if (has('W', 'Y')) {
+      // W = indicador e médio esticados; Y = polegar e mindinho.
+      best = (ext.index && ext.middle) ? 'W' : 'Y'; resolved = true;
+    } else if (has('W', 'U')) {
+      // W = três dedos (tem o anelar esticado); U = só dois.
+      best = ext.ring ? 'W' : 'U'; resolved = true;
     }
     if (best !== pair[0]) second = pair[0];
   }
