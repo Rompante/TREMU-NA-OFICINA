@@ -62,7 +62,10 @@ export default function WordleGame({
               {candidate || '—'}
             </span>
             {candidate && (
-              <span className="conf">{Math.round((recognised?.confidence || 0) * 100)}%</span>
+              <span className="conf">
+                {Math.round((recognised?.confidence || 0) * 100)}%
+                {recognised?.second ? ` · 2º ${recognised.second}` : ''}
+              </span>
             )}
           </div>
           <div className="detect-bar">
