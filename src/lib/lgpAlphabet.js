@@ -193,7 +193,7 @@ export function classify(lm) {
 // não depender de onde/como a mão está no ecrã.
 
 const Z_WEIGHT = 0.25; // a profundidade do MediaPipe é ruidosa -> pouco peso
-const DIST_SCALE = 2.6; // distância a partir da qual a "proximidade" chega a ~0
+const DIST_SCALE = 3.2; // distância a partir da qual a "proximidade" chega a ~0
 // Peso de cada ponto da mão na comparação. As PONTAS dos dedos são o que mais
 // distingue sinais parecidos (ex.: C aberto vs punho A), por isso pesam mais.
 // O pulso é a origem (não discrimina) -> peso 0.
@@ -253,29 +253,35 @@ export function classifyWithTemplates(lm, templates) {
 
   // Desempate geométrico para pares mesmo parecidos, quando estão renhidos:
   // a comparação geral sozinha falha aqui, por isso usamos uma característica
-  // específica para decidir.
-  if (second && rawMargin < 0.22) {
+  // específica para decidir. Quando resolvemos um par, ganhamos confiança.
+  let resolved = false;
+  if (second && rawMargin < 0.25) {
     const pair = [best, second];
     const has = (a, b) => pair.includes(a) && pair.includes(b);
     const angles = fingerAngles(lm);
     const ext = extended(angles);
     if (has('A', 'S')) {
       // A = polegar esticado para o lado; S = polegar dobrado/à frente.
-      best = ext.thumb ? 'A' : 'S';
+      best = ext.thumb ? 'A' : 'S'; resolved = true;
     } else if (has('O', 'E')) {
       // O = mão mais aberta/redonda; E = dedos mais dobrados (pontas recolhidas).
-      best = averageTipMcpRatio(lm) > 0.62 ? 'O' : 'E';
+      best = averageTipMcpRatio(lm) > 0.62 ? 'O' : 'E'; resolved = true;
     } else if (has('U', 'V')) {
       // U = indicador e médio juntos; V = afastados.
       const p = palmSize(lm);
       const imd = dist(lm[LM.INDEX_TIP], lm[LM.MIDDLE_TIP]) / p;
-      best = imd > 0.5 ? 'V' : 'U';
+      best = imd > 0.5 ? 'V' : 'U'; resolved = true;
     }
     if (best !== pair[0]) second = pair[0];
   }
 
+  // Confiança: assenta sobretudo na proximidade ao modelo. A margem só dá um
+  // pequeno empurrão (antes penalizava demais e a barra não enchia). Se um par
+  // foi desempatado por geometria, damos confiança alta (já decidimos qual é).
   const closeness = Math.max(0, 1 - rawBestD / DIST_SCALE);
-  const confidence = Math.max(0, Math.min(1, closeness * (0.7 + 0.3 * rawMargin)));
+  let confidence = closeness * (0.85 + 0.15 * rawMargin);
+  if (resolved) confidence = Math.max(confidence, closeness * 0.95);
+  confidence = Math.max(0, Math.min(1, confidence));
   return { letter: best, confidence, second, ext: null };
 }
 

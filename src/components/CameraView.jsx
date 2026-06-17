@@ -18,7 +18,7 @@ export default function CameraView({ holdFrames, onRecognition, templates, lates
   const rafRef = useRef(0);
   const filterRef = useRef(null);
   if (!filterRef.current) {
-    filterRef.current = createStabilityFilter({ holdFrames, minConf: 0.45 });
+    filterRef.current = createStabilityFilter({ holdFrames, minConf: 0.38 });
   }
   const onRecognitionRef = useRef(onRecognition);
   const templatesRef = useRef(templates);
