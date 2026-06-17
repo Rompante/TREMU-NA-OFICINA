@@ -108,6 +108,7 @@ export default function CameraView({ holdFrames, onRecognition, templates, lates
         emit({
           letter: recognised.letter,
           confidence: recognised.confidence,
+          second: recognised.second,
           candidate: filt.candidate,
           committed: filt.committed,
           progress: filt.progress,

@@ -236,24 +236,47 @@ function sqDist(a, b) {
 // escolhemos a melhor letra. Aceita também uma só amostra (number[]).
 export function classifyWithTemplates(lm, templates) {
   const v = normalizeLandmarks(lm);
-  let best = null, bestD = Infinity, secondD = Infinity;
+  let best = null, bestD = Infinity, second = null, secondD = Infinity;
   for (const letter of Object.keys(templates)) {
     let samples = templates[letter];
     if (!samples || !samples.length) continue;
     if (typeof samples[0] === 'number') samples = [samples]; // retrocompatível
     let d = Infinity;
     for (const s of samples) { const sd = sqDist(v, s); if (sd < d) d = sd; }
-    if (d < bestD) { secondD = bestD; bestD = d; best = letter; }
-    else if (d < secondD) { secondD = d; }
+    if (d < bestD) { second = best; secondD = bestD; best = letter; bestD = d; }
+    else if (d < secondD) { second = letter; secondD = d; }
   }
-  if (best === null) return { letter: null, confidence: 0, ext: null };
-  // A confiança assenta sobretudo em quão BEM a mão bate com o modelo
-  // (closeness). A margem para o 2.º lugar é só um multiplicador leve, para
-  // baixar a confiança quando há mesmo empate entre duas letras.
-  const closeness = Math.max(0, 1 - bestD / DIST_SCALE);
-  const margin = secondD === Infinity ? 1 : Math.max(0, (secondD - bestD) / (secondD + 1e-6));
-  const confidence = Math.max(0, Math.min(1, closeness * (0.7 + 0.3 * margin)));
-  return { letter: best, confidence, ext: null };
+  if (best === null) return { letter: null, confidence: 0, second: null, ext: null };
+
+  const rawBestD = bestD;
+  const rawMargin = secondD === Infinity ? 1 : Math.max(0, (secondD - bestD) / (secondD + 1e-6));
+
+  // Desempate geométrico para pares mesmo parecidos, quando estão renhidos:
+  // a comparação geral sozinha falha aqui, por isso usamos uma característica
+  // específica para decidir.
+  if (second && rawMargin < 0.22) {
+    const pair = [best, second];
+    const has = (a, b) => pair.includes(a) && pair.includes(b);
+    const angles = fingerAngles(lm);
+    const ext = extended(angles);
+    if (has('A', 'S')) {
+      // A = polegar esticado para o lado; S = polegar dobrado/à frente.
+      best = ext.thumb ? 'A' : 'S';
+    } else if (has('O', 'E')) {
+      // O = mão mais aberta/redonda; E = dedos mais dobrados (pontas recolhidas).
+      best = averageTipMcpRatio(lm) > 0.62 ? 'O' : 'E';
+    } else if (has('U', 'V')) {
+      // U = indicador e médio juntos; V = afastados.
+      const p = palmSize(lm);
+      const imd = dist(lm[LM.INDEX_TIP], lm[LM.MIDDLE_TIP]) / p;
+      best = imd > 0.5 ? 'V' : 'U';
+    }
+    if (best !== pair[0]) second = pair[0];
+  }
+
+  const closeness = Math.max(0, 1 - rawBestD / DIST_SCALE);
+  const confidence = Math.max(0, Math.min(1, closeness * (0.7 + 0.3 * rawMargin)));
+  return { letter: best, confidence, second, ext: null };
 }
 
 export function createTemplate(lm) {
