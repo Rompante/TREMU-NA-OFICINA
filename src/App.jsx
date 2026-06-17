@@ -1,3 +1,25 @@
+/*
+ * TREMU NA OFICINA — App.jsx (ficheiro principal)
+ * ------------------------------------------------------------------
+ * Jogo estilo "Wordle" mas GESTUAL: há uma palavra secreta de 4 letras e o
+ * jogador soletra as tentativas em Língua Gestual Portuguesa (LGP) à frente
+ * da câmara.
+ *
+ * Como as peças encaixam:
+ *  - CameraView.jsx       -> liga a câmara, corre o modelo de mãos (MediaPipe)
+ *                            e, a cada frame, diz qual a letra detetada.
+ *  - lgpAlphabet.js       -> o "cérebro": compara a mão com os modelos
+ *                            guardados (calibração) e decide a letra.
+ *  - defaultTemplates.js  -> calibração embutida (várias mãos por letra).
+ *  - WordleGame.jsx       -> o tabuleiro (tentativas, cores, vitória).
+ *  - wordle.js            -> a regra das cores (verde/amarelo/cinzento).
+ *  - words.js             -> banco de palavras de 4 letras.
+ *  - AlphabetGuide/SignVisual -> mostram o alfabeto (imagens oficiais APS).
+ *
+ * Este App.jsx é o "maestro": guarda o estado do jogo, recebe as letras
+ * detetadas pela câmara e atualiza o tabuleiro. Corre tudo no navegador —
+ * nenhuma imagem sai do dispositivo.
+ */
 import React, { useCallback, useMemo, useRef, useState } from 'react';
 import CameraView from './components/CameraView.jsx';
 import WordleGame from './components/WordleGame.jsx';
