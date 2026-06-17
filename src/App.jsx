@@ -12,15 +12,19 @@ import { loadUserTemplates, saveUserTemplates, clearUserTemplates } from './lib/
 const HOLD_FRAMES = 14;
 const WORD_LEN = 4;
 const MAX_TRIES = 6;
-const APP_VERSION = '1.7';
+const APP_VERSION = '1.8';
 
-// Junta a calibração embutida (1 amostra por letra) com as mãos adicionadas
-// pelo utilizador (várias amostras), num só conjunto { letra: amostras[] }.
+// Junta a calibração embutida com as mãos adicionadas pelo utilizador, num só
+// conjunto { letra: amostras[] }. Aceita defaults em formato de 1 vetor ou de
+// vários (array de vetores).
+function asArray(t) {
+  if (!t || !t.length) return [];
+  return typeof t[0] === 'number' ? [t] : t;
+}
 function buildTemplates(user) {
   const out = {};
   for (const l of SUPPORTED_LETTERS) {
-    const base = DEFAULT_TEMPLATES[l] ? [DEFAULT_TEMPLATES[l]] : [];
-    out[l] = [...base, ...(user[l] || [])];
+    out[l] = [...asArray(DEFAULT_TEMPLATES[l]), ...(user[l] || [])];
   }
   return out;
 }
