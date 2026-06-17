@@ -7,7 +7,7 @@ const LM = {
   PINKY_MCP: 17, PINKY_PIP: 18, PINKY_DIP: 19, PINKY_TIP: 20,
 };
 
-export const SUPPORTED_LETTERS = ['A','B','C','D','F','I','L','O','U','V','W','Y'];
+export const SUPPORTED_LETTERS = ['A','B','C','D','E','F','G','H','I','L','M','N','O','P','R','S','T','U','V','W','Y'];
 
 function sub(a, b) { return [a.x - b.x, a.y - b.y, (a.z || 0) - (b.z || 0)]; }
 function len(v) { return Math.hypot(v[0], v[1], v[2]); }

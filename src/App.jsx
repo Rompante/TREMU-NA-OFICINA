@@ -12,7 +12,7 @@ import { loadUserTemplates, saveUserTemplates, clearUserTemplates } from './lib/
 const HOLD_FRAMES = 14;
 const WORD_LEN = 4;
 const MAX_TRIES = 6;
-const APP_VERSION = '1.8';
+const APP_VERSION = '1.9';
 
 // Junta a calibração embutida com as mãos adicionadas pelo utilizador, num só
 // conjunto { letra: amostras[] }. Aceita defaults em formato de 1 vetor ou de
@@ -28,6 +28,10 @@ function buildTemplates(user) {
   }
   return out;
 }
+// Letras que o jogo já reconhece (têm pelo menos uma amostra).
+function availableFrom(tpls) {
+  return new Set(SUPPORTED_LETTERS.filter((l) => tpls[l] && tpls[l].length));
+}
 
 export default function App() {
   const [started, setStarted] = useState(false);
@@ -37,7 +41,9 @@ export default function App() {
   const [showGuide, setShowGuide] = useState(false);
 
   // Estado do jogo (Wordle gestual)
-  const [secret, setSecret] = useState(() => pickRandomWord()[0]);
+  const [secret, setSecret] = useState(
+    () => pickRandomWord([], availableFrom(buildTemplates(loadUserTemplates())))[0]
+  );
   const [rows, setRows] = useState([]); // [{ guess, result }]
   const [current, setCurrent] = useState('');
   const [status, setStatus] = useState('playing'); // 'playing' | 'won' | 'lost'
@@ -48,6 +54,7 @@ export default function App() {
   stateRef.current = { mode, status };
 
   const templates = useMemo(() => buildTemplates(userTemplates), [userTemplates]);
+  const availableLetters = useMemo(() => availableFrom(templates), [templates]);
   const addedHands = Object.values(userTemplates).reduce((a, arr) => a + (arr?.length || 0), 0);
 
   const onRecognition = useCallback((info) => {
@@ -72,11 +79,11 @@ export default function App() {
 
   const newGame = useCallback(() => {
     historyRef.current = [...historyRef.current, secret].slice(-8);
-    setSecret(pickRandomWord(historyRef.current)[0]);
+    setSecret(pickRandomWord(historyRef.current, availableLetters)[0]);
     setRows([]);
     setCurrent('');
     setStatus('playing');
-  }, [secret]);
+  }, [secret, availableLetters]);
 
   const captureTemplate = useCallback((letter, tpl) => {
     setUserTemplates((prev) => {
