@@ -4,44 +4,48 @@ Jogo de inclusão social em **React + JavaScript** no estilo "palavra do dia"
 (Wordle), mas **gestual**: há uma palavra secreta de **4 letras** e o jogador
 tem **6 tentativas** para a adivinhar, **soletrando** cada tentativa com a mão
 através do alfabeto manual da **Língua Gestual Portuguesa (LGP)** à frente da
-câmara. As células pintam-se a verde (letra certa no sítio certo), amarelo
-(existe noutro sítio) ou cinzento (não existe). O reconhecimento corre
-**inteiramente no navegador** — sem servidores nem APIs externas durante o jogo.
-
-O reconhecimento usa **comparação com modelos** (calibração embutida em
-[`src/lib/defaultTemplates.js`](src/lib/defaultTemplates.js)): a app já traz
-gravada a forma dos 12 sinais e classifica a mão atual pelo modelo mais
-parecido — muito mais robusto do que regras geométricas genéricas, e sem o
-jogador ter de calibrar nada. A mão é normalizada (posição, tamanho e rotação),
-por isso funciona para várias pessoas.
+câmara. As células pintam-se a **verde** (letra certa no sítio certo),
+**amarelo** (existe noutro sítio) ou **cinzento** (não existe). O reconhecimento
+corre **inteiramente no navegador** — sem servidores nem APIs externas.
 
 ## Como funciona
 
 1. O modelo de mãos da MediaPipe (`hand_landmarker.task`) corre via WebAssembly
-   no browser e devolve 21 pontos de referência da mão por *frame*.
-2. Um classificador geométrico próprio (`src/lib/lgpAlphabet.js`) avalia
-   ângulos das articulações e distâncias relativas para identificar a letra.
-3. A letra fica "registada" quando se mantém o gesto durante ~14 *frames* — só
-   aí é escrita, para evitar falsos positivos. Baixando a mão liberta-se o
-   bloqueio, para se poder escrever a mesma letra outra vez (ex.: "OO").
+   no browser e devolve **21 pontos de referência** da mão por *frame*.
+2. O reconhecimento (`src/lib/lgpAlphabet.js`) usa **comparação com modelos**
+   (calibração): compara a mão atual com exemplos gravados de cada letra e
+   escolhe a **mais parecida**. A mão é **normalizada** (posição, tamanho e
+   rotação) para não depender de onde está no ecrã.
+3. Para pares muito parecidos (A/S, O/E, U/V, W/Y, W/U) há um **desempate**
+   geométrico que decide pela característica que os distingue (posição do
+   polegar, forma/abertura dos dedos, etc.).
+4. A letra só é **registada** quando o sinal é mantido alguns *frames* — evita
+   falsos positivos.
+
+A calibração já vem **embutida** em
+[`src/lib/defaultTemplates.js`](src/lib/defaultTemplates.js) (várias mãos por
+letra), por isso o jogo reconhece **sem ninguém ter de calibrar**. No separador
+**Calibração** é possível **adicionar mais mãos** (do próprio ou de colegas)
+para o reconhecimento ficar ainda mais robusto — quantas mais mãos, melhor.
 
 ## Letras suportadas
 
-Apenas sinais **estáticos** a uma mão: `A B C D F I L O U V W Y`.
-Letras com movimento (J, Z) ficam fora desta versão.
+**21 letras**, sinais **estáticos** a uma mão:
+`A B C D E F G H I L M N O P R S T U V W Y`.
 
-As formas de cada sinal seguem o **alfabeto manual oficial da Língua Gestual
-Portuguesa**, conforme o cartaz da **Associação Portuguesa de Surdos (APS)** —
-e não o alfabeto internacional. Por exemplo, em LGP o **A** é o punho com o
-polegar à frente dos dedos, o **B** é o punho com o polegar para cima, e o
-**D** é a mão espalmada. O guia "Ver alfabeto" mostra cada sinal; podem
-colocar-se fotografias reais em [`public/signs/`](public/signs/) (uma por
-letra, ex.: `A.png`), que substituem automaticamente as ilustrações.
+Ficam de fora `J K Q X Z` porque os seus sinais têm **movimento** (a câmara só
+analisa poses paradas).
+
+As formas de cada sinal seguem o **alfabeto manual oficial da LGP**, do cartaz
+da **Associação Portuguesa de Surdos (APS)** — e não o alfabeto internacional.
+As imagens estão em [`public/signs/`](public/signs/) (uma por letra) e podem ser
+substituídas por outras com o mesmo nome (ex.: `A.png`).
 
 ## Banco de palavras
 
-Está em [`src/lib/words.js`](src/lib/words.js). São ~25 palavras pt-PT de
-quatro letras, todas formadas apenas pelas letras suportadas acima.
+Está em [`src/lib/words.js`](src/lib/words.js): palavras pt-PT de quatro letras,
+formadas apenas pelas letras suportadas. O jogo só escolhe palavras que se
+**conseguem soletrar** com as letras atualmente reconhecidas.
 
 ## Como correr
 
@@ -74,29 +78,38 @@ A pasta `dist/` resultante pode ser servida por qualquer *static host*.
 
 ```
 src/
-  App.jsx                 estado global do jogo
+  App.jsx                 maestro: estado do jogo + liga as peças
   main.jsx                bootstrap React
   styles.css              tema escuro acessível
   components/
-    CameraView.jsx        câmara + canvas + loop de inferência
-    GamePanel.jsx         palavra-alvo, pontuação, progresso, sinal-alvo
+    CameraView.jsx        câmara + canvas + loop de deteção da mão
+    WordleGame.jsx        tabuleiro do jogo (tentativas, cores, vitória)
+    Calibration.jsx       ecrã para adicionar mãos à calibração
     AlphabetGuide.jsx     modal com o alfabeto (imagem + descrição)
-    SignVisual.jsx        foto do sinal (public/signs) com recuo p/ ilustração
-    SignIllustration.jsx  esquema SVG da mão por letra (gerado no código)
+    SignVisual.jsx        imagem do sinal (public/signs) com recuo p/ esquema
+    SignIllustration.jsx  esquema SVG da mão por letra (recurso)
   lib/
     handTracker.js        carrega o HandLandmarker e gere a câmara
-    lgpAlphabet.js        classificador geométrico + filtro de estabilidade
-    words.js              banco de palavras + amostragem
+    lgpAlphabet.js        reconhecimento (comparação + desempates) + estabilidade
+    defaultTemplates.js   calibração embutida (várias mãos por letra)
+    calibration.js        guarda/lê mãos adicionadas (localStorage)
+    wordle.js             regra das cores verde/amarelo/cinzento
+    words.js              banco de palavras + seleção filtrada
 public/
-  signs/                  fotos reais dos sinais (opcional: A.png, B.png, …)
+  signs/                  imagens dos sinais (alfabeto oficial APS)
 scripts/
   download-model.js       descarrega modelo + copia WASM para /public
+docs/
+  TREMU-NA-OFICINA-explicacao.docx   documento de apoio (explicação do jogo)
 ```
 
 ## Notas
 
-- O reconhecimento é heurístico (sem treino de ML adicional). Funciona para
-  utilizadores principiantes que façam os sinais de forma clara, com luz
-  razoável e fundo neutro.
-- O sistema é deliberadamente *stand-alone*: nenhum estado do utilizador é
-  enviado para fora do dispositivo.
+- O reconhecimento compara com mãos reais (calibração) — quanto mais mãos por
+  letra, mais robusto. Funciona melhor com **boa luz**, **fundo simples** e a
+  **mão toda visível** na câmara.
+- O reconhecimento por câmara nunca é 100%: pode falhar uma letra ocasional
+  (mãos muito diferentes das calibradas ou má luz). Há o botão **Apagar** para
+  corrigir.
+- O sistema é deliberadamente *stand-alone*: **nenhuma imagem** sai do
+  dispositivo.
