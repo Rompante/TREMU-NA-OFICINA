@@ -299,6 +299,10 @@ export function classifyWithTemplates(lm, templates) {
     const has = (a, b) => pair.includes(a) && pair.includes(b);
     const angles = fingerAngles(lm);
     const ext = extended(angles);
+    // Mão virada para baixo? (dedos a apontar para baixo). Na LGP o M e o N são
+    // como o W e o U/V mas DE PERNAS PARA O AR (dedos para baixo). As features
+    // (ângulos/distâncias) não distinguem cima de baixo, por isso usamos isto.
+    const handDown = lm[LM.MIDDLE_MCP].y > lm[LM.WRIST].y;
     if (has('A', 'S')) {
       // A = polegar esticado para o lado; S = polegar dobrado/à frente.
       best = ext.thumb ? 'A' : 'S'; resolved = true;
@@ -316,6 +320,17 @@ export function classifyWithTemplates(lm, templates) {
     } else if (has('W', 'U')) {
       // W = três dedos (tem o anelar esticado); U = só dois.
       best = ext.ring ? 'W' : 'U'; resolved = true;
+    } else if (has('M', 'W')) {
+      // M = 3 dedos para baixo; W = 3 dedos para cima.
+      best = handDown ? 'M' : 'W'; resolved = true;
+    } else if (has('N', 'U')) {
+      // N = 2 dedos para baixo; U = 2 dedos para cima.
+      best = handDown ? 'N' : 'U'; resolved = true;
+    } else if (has('N', 'V')) {
+      best = handDown ? 'N' : 'V'; resolved = true;
+    } else if (has('M', 'N')) {
+      // Ambos para baixo: M tem 3 dedos (anelar esticado), N só 2.
+      best = ext.ring ? 'M' : 'N'; resolved = true;
     }
     if (best !== pair[0]) second = pair[0];
   }
