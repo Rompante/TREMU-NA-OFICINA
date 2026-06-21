@@ -193,7 +193,7 @@ export function classify(lm) {
 // não depender de onde/como a mão está no ecrã.
 
 const Z_WEIGHT = 0.25; // a profundidade do MediaPipe é ruidosa -> pouco peso
-const DIST_SCALE = 3.2; // distância a partir da qual a "proximidade" chega a ~0
+const DIST_SCALE = 6.9; // distância (no espaço de features) p/ confiança ~0
 // Peso de cada ponto da mão na comparação. As PONTAS dos dedos são o que mais
 // distingue sinais parecidos (ex.: C aberto vs punho A), por isso pesam mais.
 // O pulso é a origem (não discrimina) -> peso 0.
@@ -231,11 +231,46 @@ function sqDist(a, b) {
   return s;
 }
 
+// ---------------------------------------------------------------------------
+// Representação por CARACTERÍSTICAS (features) — muito mais robusta entre
+// pessoas do que posições. Cada mão vira um vetor de: curvatura de cada dedo
+// (ângulo), comprimento de cada dedo (ponta->base) e afastamento entre dedos.
+// Estes valores são quase iguais de pessoa para pessoa (não dependem do
+// tamanho/posição da mão), por isso reconhecem muito melhor.
+// FEAT_MEAN/FEAT_STD standardizam as features (média 0, desvio 1); foram
+// calculados a partir das calibrações recolhidas.
+const FEAT_FINGERS = [[1, 2, 3, 4], [5, 6, 7, 8], [9, 10, 11, 12], [13, 14, 15, 16], [17, 18, 19, 20]];
+const FEAT_MEAN = [0.84712, 0.6903, 0.67124, 0.49611, 0.52507, 0.91502, 0.75661, 0.82789, 0.63718, 0.52687, 0.47, 0.47664, 0.36733, 0.70635];
+const FEAT_STD = [0.1278, 0.30658, 0.3421, 0.36011, 0.34871, 0.19739, 0.28531, 0.38635, 0.36062, 0.29413, 0.34894, 0.44176, 0.31392, 0.38025];
+
+function dist2(a, b) { return Math.hypot(a[0] - b[0], a[1] - b[1]); }
+function angle2d(a, b, c) {
+  const v1 = [a[0] - b[0], a[1] - b[1]], v2 = [c[0] - b[0], c[1] - b[1]];
+  const dot = v1[0] * v2[0] + v1[1] * v2[1];
+  const m = Math.hypot(v1[0], v1[1]) * Math.hypot(v2[0], v2[1]) + 1e-9;
+  return (Math.acos(Math.max(-1, Math.min(1, dot / m))) * 180) / Math.PI;
+}
+
+// Vetor de features (já standardizado) a partir dos landmarks crus.
+export function featureVector(lm) {
+  const w0 = lm[0];
+  const m = lm[LM.MIDDLE_MCP];
+  const palm = Math.hypot(m.x - w0.x, m.y - w0.y, (m.z || 0) - (w0.z || 0)) || 1e-6;
+  const P = lm.map((p) => [(p.x - w0.x) / palm, (p.y - w0.y) / palm]);
+  const f = [];
+  for (const [mcp, pip, , tip] of FEAT_FINGERS) f.push(angle2d(P[mcp], P[pip], P[tip]) / 180);
+  for (const [mcp, , , tip] of FEAT_FINGERS) f.push(dist2(P[tip], P[mcp]));
+  f.push(dist2(P[8], P[12]), dist2(P[12], P[16]), dist2(P[16], P[20]), dist2(P[4], P[8]));
+  const out = new Array(f.length);
+  for (let k = 0; k < f.length; k++) out[k] = (f[k] - FEAT_MEAN[k]) / FEAT_STD[k];
+  return out;
+}
+
 // templates: { [letra]: number[][] }  (VÁRIAS amostras normalizadas por letra).
 // Para cada letra usamos a amostra mais próxima (a mão mais parecida), e depois
 // escolhemos a melhor letra. Aceita também uma só amostra (number[]).
 export function classifyWithTemplates(lm, templates) {
-  const v = normalizeLandmarks(lm);
+  const v = featureVector(lm);
   let best = null, bestD = Infinity, second = null, secondD = Infinity;
   for (const letter of Object.keys(templates)) {
     let samples = templates[letter];
@@ -296,7 +331,7 @@ export function classifyWithTemplates(lm, templates) {
 }
 
 export function createTemplate(lm) {
-  return normalizeLandmarks(lm);
+  return featureVector(lm);
 }
 
 export function createStabilityFilter({ holdFrames = 12, minConf = 0.75 } = {}) {

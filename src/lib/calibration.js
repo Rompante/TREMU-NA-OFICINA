@@ -3,7 +3,9 @@
 // juntar as mãos de várias pessoas e o reconhecimento ficar mais robusto.
 // Fica no localStorage do browser (não sai do dispositivo).
 
-const KEY = 'tno-lgp-user-v3';
+// v4: o formato dos modelos mudou para "features" (ângulos+distâncias). Os
+// modelos antigos (posições) são incompatíveis, por isso esta versão recomeça.
+const KEY = 'tno-lgp-user-v4';
 
 export function loadUserTemplates() {
   try {

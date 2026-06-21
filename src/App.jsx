@@ -34,7 +34,7 @@ import { loadUserTemplates, saveUserTemplates, clearUserTemplates } from './lib/
 const HOLD_FRAMES = 10;
 const WORD_LEN = 4;
 const MAX_TRIES = 6;
-const APP_VERSION = '2.8';
+const APP_VERSION = '2.9';
 
 // Junta a calibração embutida com as mãos adicionadas pelo utilizador, num só
 // conjunto { letra: amostras[] }. Aceita defaults em formato de 1 vetor ou de
