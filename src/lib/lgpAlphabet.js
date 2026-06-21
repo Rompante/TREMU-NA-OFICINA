@@ -310,8 +310,15 @@ export function createStabilityFilter({ holdFrames = 12, minConf = 0.75 } = {}) 
         locked = null;
         return { committed: null, candidate: letter, progress: 0 };
       }
-      if (letter === last) count++;
-      else { last = letter; count = 1; }
+      if (letter === last) {
+        count++;
+      } else {
+        // Tolerar tremores: em vez de reiniciar a zero quando a leitura "salta"
+        // por um instante para outra letra, descontamos. A letra dominante
+        // continua a subir e a barra chega ao fim mesmo com leituras instáveis.
+        count -= 1;
+        if (count <= 0) { last = letter; count = 1; }
+      }
       const progress = Math.min(1, count / holdFrames);
       if (count >= holdFrames && letter !== locked) {
         locked = letter;
