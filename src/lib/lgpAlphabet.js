@@ -241,8 +241,15 @@ export function classifyWithTemplates(lm, templates) {
     let samples = templates[letter];
     if (!samples || !samples.length) continue;
     if (typeof samples[0] === 'number') samples = [samples]; // retrocompatível
-    let d = Infinity;
-    for (const s of samples) { const sd = sqDist(v, s); if (sd < d) d = sd; }
+    // Distância da letra = média das 2 amostras MAIS próximas (em vez de só a
+    // mais próxima). Assim uma única amostra "estranha" não faz a letra ganhar
+    // por engano — é preciso ter 2 mãos parecidas. Mais robusto/preciso.
+    let d1 = Infinity, d2 = Infinity;
+    for (const s of samples) {
+      const sd = sqDist(v, s);
+      if (sd < d1) { d2 = d1; d1 = sd; } else if (sd < d2) { d2 = sd; }
+    }
+    const d = d2 === Infinity ? d1 : (d1 + d2) / 2;
     if (d < bestD) { second = best; secondD = bestD; best = letter; bestD = d; }
     else if (d < secondD) { second = letter; secondD = d; }
   }

@@ -11,6 +11,22 @@ const HAND_CONNECTIONS = [
   [0,17],
 ];
 
+// Nº de frames a misturar para suavizar os pontos da mão (reduz o tremor).
+const SMOOTH_FRAMES = 4;
+
+// Média ponto-a-ponto de vários frames de landmarks -> uma mão mais "estável".
+function averageLandmarks(buffer) {
+  if (buffer.length === 1) return buffer[0];
+  const n = buffer.length;
+  const out = [];
+  for (let i = 0; i < buffer[0].length; i++) {
+    let x = 0, y = 0, z = 0;
+    for (const lm of buffer) { x += lm[i].x; y += lm[i].y; z += lm[i].z || 0; }
+    out.push({ x: x / n, y: y / n, z: z / n });
+  }
+  return out;
+}
+
 export default function CameraView({ holdFrames, onRecognition, templates, latestLmRef }) {
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
@@ -22,6 +38,7 @@ export default function CameraView({ holdFrames, onRecognition, templates, lates
   }
   const onRecognitionRef = useRef(onRecognition);
   const templatesRef = useRef(templates);
+  const lmBufferRef = useRef([]);
   const lastVideoTimeRef = useRef(-1);
   const lastSentRef = useRef(null);
   const [status, setStatus] = useState('A inicializar câmara…');
@@ -94,14 +111,21 @@ export default function CameraView({ holdFrames, onRecognition, templates, lates
         let recognised = { letter: null, confidence: 0 };
         if (result && result.landmarks && result.landmarks.length) {
           const lm = result.landmarks[0];
-          drawHand(ctx, lm, canvas.width, canvas.height);
-          if (latestLmRef) latestLmRef.current = lm;
+          drawHand(ctx, lm, canvas.width, canvas.height); // desenha a mão real
+          if (latestLmRef) latestLmRef.current = lm;       // captura p/ calibração
+          // Suavizar: média dos últimos frames reduz o tremor dos pontos e dá
+          // uma leitura mais estável e precisa (sobretudo com a mão parada).
+          const buf = lmBufferRef.current;
+          buf.push(lm);
+          if (buf.length > SMOOTH_FRAMES) buf.shift();
+          const smoothLm = averageLandmarks(buf);
           const tpl = templatesRef.current;
           recognised = (tpl && Object.keys(tpl).length >= 2)
-            ? classifyWithTemplates(lm, tpl)
-            : classify(lm);
-        } else if (latestLmRef) {
-          latestLmRef.current = null;
+            ? classifyWithTemplates(smoothLm, tpl)
+            : classify(smoothLm);
+        } else {
+          lmBufferRef.current = [];
+          if (latestLmRef) latestLmRef.current = null;
         }
         ctx.restore();
         const filt = filterRef.current.push(recognised);
