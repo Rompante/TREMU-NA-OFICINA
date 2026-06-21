@@ -58,15 +58,15 @@ export function loadHandLandmarker() {
 
 export async function attachCamera(videoEl) {
   if (!videoEl) throw new Error('Elemento de vídeo indisponível');
-  // Pedimos resolução HD com a câmara frontal mas mantemos a proporção 4:3.
-  // IMPORTANTE: o classificador geométrico usa landmarks normalizados (0-1),
-  // que dependem da proporção da imagem. Foi afinado para 4:3 (como os antigos
-  // 640x480), por isso mantemos 4:3 — só aumentamos a resolução. Mudar para
-  // 16:9 distorceria a geometria e os gestos passariam a ser lidos errado.
+  // Resolução modesta (640x480, 4:3) com a câmara frontal. Processar imagens
+  // grandes (HD) a cada frame com o modelo das mãos é pesado e causa "lag",
+  // sobretudo sem GPU. 640x480 é mais que suficiente para detetar a mão e fica
+  // bastante mais fluido. Mantemos 4:3 (a geometria dos landmarks é normalizada,
+  // mas 4:3 mantém-se por consistência com a calibração).
   const baseVideo = {
     facingMode: 'user',
-    width: { ideal: 1280 },
-    height: { ideal: 960 },
+    width: { ideal: 640 },
+    height: { ideal: 480 },
     aspectRatio: { ideal: 4 / 3 },
     frameRate: { ideal: 30 },
   };
