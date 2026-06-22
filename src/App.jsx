@@ -122,7 +122,7 @@ export default function App() {
   return (
     <div className="app">
       <header className="header">
-        <h1 className="brand">TREMU NA OFICINA v.2.0</h1>
+        <h1 className="brand">TREMU NA OFICINA v.3.0</h1>
         <p className="tagline">
           Adivinha a palavra de 4 letras — soletra as tentativas em Língua Gestual Portuguesa
         </p>
